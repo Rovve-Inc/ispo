@@ -71,14 +71,15 @@ async function handleWalletSubmit(event) {
             } else {
                 data.delegationHistory.forEach(delegation => {
                     const row = tbody.insertRow();
-                    const formattedDate = new Date().toLocaleDateString('en-US', {
+                    const delegationDate = new Date(delegation.timestamp);
+                    const formattedDate = delegationDate.toLocaleDateString('en-US', {
                         month: 'short',
                         day: 'numeric',
                         year: 'numeric'
                     });
                     row.innerHTML = `
                         <td>${formattedDate}</td>
-                        <td>${Number(1000000).toLocaleString()} HASH</td>
+                        <td>${Number(delegation.amount).toLocaleString()} HASH</td>
                         <td>
                             <span class="badge bg-info">Initial Delegation</span>
                         </td>
