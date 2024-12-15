@@ -1,9 +1,7 @@
 // Initialize page elements
 document.addEventListener('DOMContentLoaded', function() {
-    // Load validator stats
     fetchValidatorStats();
     
-    // Add event listener to wallet form if it exists
     const walletForm = document.getElementById('walletForm');
     if (walletForm) {
         walletForm.addEventListener('submit', handleWalletSubmit);
@@ -24,65 +22,105 @@ async function fetchValidatorStats() {
         document.getElementById('daysRemaining').textContent = data.days_remaining;
     } catch (error) {
         console.error('Error fetching validator stats:', error);
+        showError('Failed to load validator statistics');
     }
+}
+
+function validateWalletAddress(address) {
+    // Check if address matches Provenance format (pb + 39 characters)
+    const addressRegex = /^pb[a-zA-Z0-9]{39}$/;
+    return addressRegex.test(address);
 }
 
 async function handleWalletSubmit(event) {
     event.preventDefault();
     const walletAddress = document.getElementById('walletAddress').value.trim();
-        
-        // Format connection data according to Figure wallet specifications
-        const connectionData = {
-            action: "connect",
-            protocol: "figure",
-            version: "1",
-            sessionId: sessionId,
-            dapp: {
-                name: "Rovve ISPO",
-                url: window.location.origin,
-                description: "Provenance ISPO Delegation Portal",
-                icon: `${window.location.origin}/static/img/logo.svg`
-            },
-            chain: {
-                id: "pio-mainnet-1",
-                name: "Provenance",
-                rpcUrl: "https://rpc.provenance.io",
-                explorerUrl: "https://explorer.provenance.io",
-                nativeDenom: "nhash",
-                displayDenom: "HASH",
-                decimals: 9
-            }
-        };
-
-        // Create the deep link URL for Figure wallet
-        const deepLink = `figure://wallet/connect?data=${encodeURIComponent(JSON.stringify(connectionData))}`;
-        
-        // Generate QR code
-        const qrCodeDiv = document.getElementById('qrCode');
-        qrCodeDiv.innerHTML = `
-            <div class="text-center">
-                <img src="https://api.qrserver.com/v1/create-qr-code/?data=${encodeURIComponent(deepLink)}&size=250x250&format=svg&margin=2" 
-                     alt="Figure Wallet Connection QR Code" 
-                     class="img-fluid mb-3">
-                <p class="small text-muted mb-2">Scan with Figure Wallet mobile app</p>
-                <button class="btn btn-sm btn-secondary" onclick="copyWalletLink('${deepLink}')">
-                    <i class="bi bi-clipboard"></i> Copy Wallet Link
-                </button>
-            </div>
-        `;
-        
-        return deepLink;
-    } catch (error) {
-        console.error('Error generating QR code:', error);
-        const qrCodeDiv = document.getElementById('qrCode');
-        qrCodeDiv.innerHTML = `
-            <div class="alert alert-danger">
-                <p class="mb-0">Failed to generate QR code. Please try again or use desktop wallet.</p>
-                <small class="d-block mt-2">${error.message}</small>
-            </div>
-        `;
-        throw error;
+    
+    if (!validateWalletAddress(walletAddress)) {
+        showError('Invalid wallet address format. Please enter a valid Provenance address starting with "pb".');
+        return;
     }
+    
+    showLoading(true);
+    document.getElementById('rewardsContent').classList.add('d-none');
+        
+        try {
+        const response = await fetch(`/api/delegations/${walletAddress}`);
+        if (!response.ok) {
+            throw new Error('Failed to fetch delegation data');
+        }
+        
+        const data = await response.json();
+        document.getElementById('rewardsContent').classList.remove('d-none');
+        updateDelegationSummary(data);
+        updateDelegationHistory(data);
+    } catch (error) {
+        showError('Failed to fetch delegation data. Please try again later.');
+    } finally {
+        showLoading(false);
+    }
+}
+
+function updateDelegationSummary(data) {
+    document.getElementById('totalDelegated').textContent = `${data.totalDelegated.toLocaleString()} HASH`;
+    document.getElementById('latestDelegation').textContent = data.delegationHistory.length > 0 
+        ? `${data.delegationHistory[0].amount.toLocaleString()} HASH` 
+        : '0 HASH';
+}
+
+function updateDelegationHistory(data) {
+    const tbody = document.getElementById('rewardHistory');
+    tbody.innerHTML = '';
+
+        if (!data.delegationHistory || data.delegationHistory.length === 0) {
+        const row = tbody.insertRow();
+        row.innerHTML = `
+            <td colspan="3" class="text-center">No delegation history found</td>
+        `;
+        return;
+    }
+    
+    data.delegationHistory.forEach(delegation => {
+        const row = tbody.insertRow();
+        row.innerHTML = `
+            <td>${new Date(delegation.timestamp).toLocaleDateString()}</td>
+            <td>${delegation.amount.toLocaleString()} HASH</td>
+            <td><a href="https://explorer.provenance.io/tx/${delegation.tx_hash}" 
+                   target="_blank" class="btn btn-sm btn-outline-primary">
+                View Transaction
+            </a></td>
+        `;
+    });
+}
+
+function showError(message) {
+    // Remove any existing error messages
+    const existingAlerts = document.querySelectorAll('.alert-danger');
+    existingAlerts.forEach(alert => alert.remove());
+    
+    const alertDiv = document.createElement('div');
+    alertDiv.className = 'alert alert-danger alert-dismissible fade show';
+    alertDiv.innerHTML = `
+        ${message}
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    `;
+    document.querySelector('.card-body').insertBefore(alertDiv, document.getElementById('walletForm'));
+}
+
+function showLoading(show) {
+    const button = document.querySelector('#walletForm button');
+    const input = document.querySelector('#walletForm input');
+    
+    if (show) {
+        button.disabled = true;
+        button.innerHTML = '<span class="spinner-border spinner-border-sm"></span> Loading...';
+        input.disabled = true;
+    } else {
+        button.disabled = false;
+        button.innerHTML = 'Check Delegation';
+        input.disabled = false;
+    }
+}
 }
 
 function copyWalletLink(link) {

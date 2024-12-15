@@ -6,17 +6,15 @@ class Config:
     SQLALCHEMY_TRACK_MODIFICATIONS = False
     
     # Validator Configuration
+    VALIDATOR_ADDRESS = "pbvaloper1lzgdym2g6vhp2w7298hvmcdv6aatxeajrj694m"  # Test validator
     VALIDATOR_NAME = "Rovve ISPO"
     VALIDATOR_DESCRIPTION = "Official Rovve ISPO validator for RV token distribution"
     MINIMUM_DELEGATION = 100  # Minimum HASH tokens required
-    ISPO_START_DATE = "2024-03-01"
-    ISPO_END_DATE = "2024-09-01"
-    
-    # AWS Configuration
-    AWS_REGION = os.environ.get('AWS_REGION', 'us-west-2')
-    NITRO_ENCLAVE_ID = os.environ.get('NITRO_ENCLAVE_ID')
+    ISPO_START_DATE = "2025-01-15"  # Updated dates from requirements
+    ISPO_END_DATE = "2025-09-15"
     
     # Provenance Configuration
     CHAIN_ID = "pio-mainnet-1"
-    RPC_ENDPOINT = os.environ.get('RPC_ENDPOINT', 'https://rpc.provenance.io')
-    API_ENDPOINT = os.environ.get('API_ENDPOINT', 'https://api.provenance.io')
+    RPC_ENDPOINT = "https://rpc.provenance.io"
+    REST_ENDPOINT = "https://api.provenance.io"
+    LCD_ENDPOINT = "https://api.provenance.io"  # Needed for delegation queries
