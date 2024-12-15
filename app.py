@@ -1,32 +1,30 @@
 import os
-import requests
-from flask import Flask, render_template, jsonify
 import logging
 from datetime import datetime
-
+from flask import Flask, jsonify, render_template
 from db import db
-from models import Delegation, ValidatorStatus
+from models import Delegation, ValidatorStatus, TokenDistribution
 import provenance
+from token_distribution import TokenDistributionManager
 
 # Set up detailed logging
 logging.basicConfig(level=logging.DEBUG)
 logger = logging.getLogger(__name__)
 
+# Initialize token distribution manager
+token_manager = TokenDistributionManager()
+
 # Create the app
 app = Flask(__name__)
 
-# Import and load configuration
-from config import Config
-app.config.from_object(Config)
-
-# Additional database configuration
-app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
+# Configure database
+app.config["SQLALCHEMY_DATABASE_URI"] = os.environ.get("DATABASE_URL")
 app.config["SQLALCHEMY_ENGINE_OPTIONS"] = {
     "pool_recycle": 300,
     "pool_pre_ping": True,
 }
 
-# Initialize the app with the extension
+# Initialize the database
 db.init_app(app)
 
 @app.route('/')
@@ -48,51 +46,106 @@ def delegations():
 @app.route('/api/validator/stats')
 def get_validator_stats():
     try:
-        validator_address = app.config['VALIDATOR_ADDRESS']
-        validator_info = provenance.get_validator_info(validator_address)
+        # Get latest validator status
+        status = ValidatorStatus.query.order_by(ValidatorStatus.id.desc()).first()
         
-        # Calculate days until end
-        end_date = datetime.strptime('2025-09-15', '%Y-%m-%d')
-        days_remaining = (end_date - datetime.utcnow()).days
-        
-        # Get total participants from validator info
-        total_participants = db.session.query(Delegation.wallet_address.distinct()).count() or 4  # Default to 4 if no data
+        if status:
+            # Calculate days remaining until Sep 15, 2025
+            end_date = datetime(2025, 9, 15)
+            days_remaining = (end_date - datetime.utcnow()).days
+            
+            return jsonify({
+                'total_delegated': float(status.total_delegated),
+                'total_participants': Delegation.query.distinct(Delegation.wallet_address).count(),
+                'days_remaining': max(0, days_remaining),
+                'uptime': float(status.uptime)
+            })
         
         return jsonify({
-            'total_delegated': validator_info['tokens'],  # This is already in HASH
-            'total_participants': total_participants,
-            'days_remaining': max(0, days_remaining),
-            'validator_status': 'active'
+            'total_delegated': 0,
+            'total_participants': 0,
+            'days_remaining': 0,
+            'uptime': 100.0
         })
+        
     except Exception as e:
-        logging.error(f"Error fetching validator stats: {str(e)}")
-        return jsonify({'error': 'Failed to fetch validator statistics'}), 500
+        logger.error(f"Error getting validator stats: {str(e)}")
+        return jsonify({'error': 'Failed to get validator statistics'}), 500
 
 @app.route('/api/delegations/<wallet_address>')
 def get_delegations(wallet_address):
     try:
-        validator_address = app.config['VALIDATOR_ADDRESS']
-        delegation_info = provenance.get_delegator_info(validator_address, wallet_address)
-        
-        # Process delegations using the proper format from provenance.py
-        delegations = []
-        for delegation in delegation_info['delegations']:
-            if delegation['validator'] == validator_address:
-                delegations.append({
-                    'timestamp': datetime.utcnow().isoformat(),
-                    'amount': delegation['amount'],  # Already in HASH from provenance.py
-                    'tx_hash': delegation.get('tx_hash', 'txhash_placeholder'),
-                    'status': 'active'
-                })
+        delegations = [{
+            'amount': float(d.amount),
+            'timestamp': d.timestamp.isoformat(),
+            'tx_hash': d.tx_hash,
+            'status': d.status
+        } for d in Delegation.query.filter_by(
+            wallet_address=wallet_address
+        ).order_by(Delegation.timestamp.desc()).all()]
         
         return jsonify({
-            'totalDelegated': delegation_info['amount'],  # Already in HASH
             'delegationHistory': delegations
         })
         
     except Exception as e:
         logger.error(f"Error processing delegations for {wallet_address}: {str(e)}")
         return jsonify({'error': 'Failed to process delegation data'}), 500
+
+@app.route('/api/rewards/<wallet_address>')
+def get_rewards(wallet_address):
+    try:
+        # Get all active delegations for the wallet
+        delegations = Delegation.query.filter_by(
+            wallet_address=wallet_address,
+            status='active'
+        ).all()
+        
+        total_rv_tokens = 0
+        early_bonus = 0
+        rewards_data = []
+        
+        for delegation in delegations:
+            rv_tokens, bonus = token_manager.calculate_rewards(delegation)
+            total_rv_tokens += rv_tokens
+            early_bonus += bonus
+            
+            rewards_data.append({
+                'delegation_amount': float(delegation.amount),
+                'rv_tokens': float(rv_tokens),
+                'early_bonus': float(bonus),
+                'delegation_date': delegation.timestamp.isoformat()
+            })
+        
+        return jsonify({
+            'total_rv_tokens': float(total_rv_tokens),
+            'total_early_bonus': float(early_bonus),
+            'rewards_breakdown': rewards_data
+        })
+        
+    except Exception as e:
+        logger.error(f"Error calculating rewards for {wallet_address}: {str(e)}")
+        return jsonify({'error': 'Failed to calculate rewards'}), 500
+
+@app.route('/api/distribution/status/<wallet_address>')
+def get_distribution_status(wallet_address):
+    try:
+        distributions = TokenDistribution.query.filter_by(
+            wallet_address=wallet_address
+        ).all()
+        
+        return jsonify({
+            'distributions': [{
+                'amount': float(dist.rv_tokens),
+                'early_bonus': float(dist.early_bonus),
+                'status': dist.status,
+                'distribution_date': dist.distribution_date.isoformat()
+            } for dist in distributions]
+        })
+        
+    except Exception as e:
+        logger.error(f"Error getting distribution status for {wallet_address}: {str(e)}")
+        return jsonify({'error': 'Failed to get distribution status'}), 500
 
 if __name__ == '__main__':
     with app.app_context():

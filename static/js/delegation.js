@@ -48,34 +48,47 @@ async function handleWalletSubmit(event) {
     }
         
     try {
-        const response = await fetch(`/api/delegations/${walletAddress}`);
-        const data = await response.json();
+        // Fetch delegations and rewards data
+        const [delegationsResponse, rewardsResponse] = await Promise.all([
+            fetch(`/api/delegations/${walletAddress}`),
+            fetch(`/api/rewards/${walletAddress}`)
+        ]);
         
-        if (!response.ok) {
-            throw new Error(data.error || 'Failed to fetch delegation data');
+        const delegationsData = await delegationsResponse.json();
+        const rewardsData = await rewardsResponse.json();
+        
+        if (!delegationsResponse.ok || !rewardsResponse.ok) {
+            throw new Error(delegationsData.error || rewardsData.error || 'Failed to fetch data');
         }
         
         if (rewardsContent) {
             rewardsContent.classList.remove('d-none');
         }
         
-        // Always show the table even if there's no data
+        // Update RV tokens and bonus display
+        document.getElementById('totalRvTokens').textContent = 
+            `${Number(rewardsData.total_rv_tokens).toLocaleString()} RV`;
+        document.getElementById('earlyBonus').textContent = 
+            `Early Bonus: ${Number(rewardsData.total_early_bonus).toFixed(1)}%`;
+        
+        // Update delegation history table
         const tbody = document.getElementById('rewardHistory');
         if (tbody) {
             tbody.innerHTML = '';
             
-            if (!data.delegationHistory || data.delegationHistory.length === 0) {
+            if (!rewardsData.rewards_breakdown || rewardsData.rewards_breakdown.length === 0) {
                 const row = tbody.insertRow();
-                row.innerHTML = '<td colspan="3" class="text-center">No delegation history found for this address</td>';
+                row.innerHTML = '<td colspan="4" class="text-center">No delegation history found for this address</td>';
             } else {
-                data.delegationHistory.forEach(delegation => {
+                rewardsData.rewards_breakdown.forEach(reward => {
                     const row = tbody.insertRow();
-                    // Set fixed date for the initial delegation
-                    const delegationDate = '12/14/2024';
                     row.innerHTML = `
-                        <td>${delegationDate}</td>
-                        <td>${Number(delegation.amount).toLocaleString()} HASH</td>
-                        <td>Initial Delegation</td>
+                        <td>${new Date(reward.delegation_date).toLocaleDateString()}</td>
+                        <td>${Number(reward.delegation_amount).toLocaleString()} HASH</td>
+                        <td>${Number(reward.rv_tokens).toLocaleString()} RV</td>
+                        <td>
+                            <span class="badge bg-info">Earning Rewards</span>
+                        </td>
                     `;
                 });
             }
