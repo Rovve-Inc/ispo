@@ -34,13 +34,9 @@ class ValidatorStatus(db.Model):
 class Referral(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     referrer_wallet = db.Column(db.String(44), nullable=False)
-    referred_wallet = db.Column(db.String(44), nullable=False)
+    referred_wallet = db.Column(db.String(44), nullable=True)  # Nullable until code is used
     referral_code = db.Column(db.String(10), unique=True, nullable=False)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     status = db.Column(db.String(20), default='active')  # active, expired, used
     bonus_percentage = db.Column(db.Numeric(precision=5, scale=2), default=5.00)  # 5% bonus
-
-    __table_args__ = (
-        db.UniqueConstraint('referred_wallet', name='unique_referred_wallet'),
-    )
     rank = db.Column(db.Integer)  # Validator rank by total stake
