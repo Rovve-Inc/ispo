@@ -55,7 +55,7 @@ with app.app_context():
 
 @app.route('/')
 def index():
-    return render_template('index.html')
+    return render_template('referral.html')
 
 @app.route('/delegate')
 def delegate():
