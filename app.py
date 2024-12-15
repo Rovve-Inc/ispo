@@ -5,6 +5,7 @@ from sqlalchemy.orm import DeclarativeBase
 import logging
 from datetime import datetime
 
+# Set up logging
 logging.basicConfig(level=logging.DEBUG)
 
 # Initialize SQLAlchemy with a custom base class
@@ -27,24 +28,7 @@ app.config["SQLALCHEMY_ENGINE_OPTIONS"] = {
 # Initialize the app with the extension
 db.init_app(app)
 
-# Models
-class Delegation(db.Model):
-    id = db.Column(db.Integer, primary_key=True)
-    wallet_address = db.Column(db.String(44), nullable=False)
-    amount = db.Column(db.Numeric(precision=20, scale=6), nullable=False)
-    timestamp = db.Column(db.DateTime, default=datetime.utcnow)
-    status = db.Column(db.String(20), default='active')
-    distributions = db.relationship('TokenDistribution', backref='delegation', lazy=True)
-
-class TokenDistribution(db.Model):
-    id = db.Column(db.Integer, primary_key=True)
-    wallet_address = db.Column(db.String(44), nullable=False)
-    delegation_id = db.Column(db.Integer, db.ForeignKey('delegation.id'), nullable=False)
-    rv_tokens = db.Column(db.Numeric(precision=20, scale=6), nullable=False)
-    early_bonus = db.Column(db.Numeric(precision=5, scale=2), default=0)
-    status = db.Column(db.String(20), default='pending')
-    created_at = db.Column(db.DateTime, default=datetime.utcnow)
-    distribution_date = db.Column(db.DateTime)
+from models import Delegation, ValidatorStatus
 
 @app.route('/')
 def index():
@@ -54,46 +38,62 @@ def index():
 def delegate():
     return render_template('delegate.html')
 
-@app.route('/rewards')
-def rewards():
-    return render_template('rewards.html')
-
 @app.route('/about')
 def about():
     return render_template('about.html')
 
-@app.route('/api/rewards/<wallet_address>')
-def get_rewards(wallet_address):
+@app.route('/api/validator/stats')
+def get_validator_stats():
     try:
-        # Get delegations and calculated RV token rewards
-        delegations = Delegation.query.filter_by(wallet_address=wallet_address).all()
-        distributions = TokenDistribution.query.filter_by(wallet_address=wallet_address).all()
+        # Get validator status
+        validator = ValidatorStatus.query.order_by(ValidatorStatus.last_updated.desc()).first()
         
-        # Calculate totals
+        # Calculate days until end
+        end_date = datetime.strptime('2025-09-15', '%Y-%m-%d')
+        days_remaining = (end_date - datetime.utcnow()).days
+        
+        # Get total participants (unique delegators)
+        total_participants = db.session.query(Delegation.wallet_address.distinct()).count()
+        
+        return jsonify({
+            'total_delegated': float(validator.total_delegated) if validator else 0,
+            'total_participants': total_participants,
+            'days_remaining': max(0, days_remaining),
+            'validator_status': validator.status if validator else 'unknown'
+        })
+    except Exception as e:
+        logging.error(f"Error fetching validator stats: {str(e)}")
+        return jsonify({'error': 'Failed to fetch validator statistics'}), 500
+
+@app.route('/api/delegations/<wallet_address>')
+def get_delegations(wallet_address):
+    try:
+        # Get delegations for the wallet
+        delegations = Delegation.query.filter_by(
+            wallet_address=wallet_address
+        ).order_by(Delegation.timestamp.desc()).all()
+        
+        # Calculate total delegated
         total_delegated = sum(float(d.amount) for d in delegations)
-        total_rewards = sum(float(d.rv_tokens) for d in distributions)
         
-        # Format reward history
-        reward_history = []
-        for dist in distributions:
-            reward_history.append({
-                'timestamp': dist.created_at.isoformat(),
-                'type': 'Delegation Reward',
-                'amount': float(dist.rv_tokens),
-                'early_bonus': float(dist.early_bonus)
+        # Format delegation history
+        delegation_history = []
+        for delegation in delegations:
+            delegation_history.append({
+                'timestamp': delegation.timestamp.isoformat(),
+                'amount': float(delegation.amount),
+                'tx_hash': delegation.tx_hash,
+                'status': delegation.status
             })
         
         return jsonify({
             'totalDelegated': total_delegated,
-            'totalRewards': total_rewards,
-            'rewardHistory': reward_history,
-            'distributionDate': '2025-09-15',  # ISPO end date
-            'earlyBonus': max((float(d.early_bonus) for d in distributions), default=0)
+            'delegationHistory': delegation_history
         })
         
     except Exception as e:
-        logging.error(f"Error fetching rewards for {wallet_address}: {str(e)}")
-        return jsonify({'error': 'Failed to fetch rewards data'}), 500
+        logging.error(f"Error fetching delegations for {wallet_address}: {str(e)}")
+        return jsonify({'error': 'Failed to fetch delegation data'}), 500
 
 if __name__ == '__main__':
     with app.app_context():

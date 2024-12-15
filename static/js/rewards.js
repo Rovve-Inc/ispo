@@ -4,45 +4,48 @@ function validateWalletAddress(address) {
     return addressRegex.test(address);
 }
 
-async function fetchRewardsData(walletAddress) {
+async function fetchDelegationData(walletAddress) {
     try {
-        const response = await fetch(`/api/rewards/${walletAddress}`);
+        const response = await fetch(`/api/delegations/${walletAddress}`);
         if (!response.ok) {
-            throw new Error('Failed to fetch rewards data');
+            throw new Error('Failed to fetch delegation data');
         }
         const data = await response.json();
         return data;
     } catch (error) {
-        console.error('Error fetching rewards:', error);
+        console.error('Error fetching delegations:', error);
         throw error;
     }
 }
 
-function updateRewardsSummary(data) {
+function updateDelegationSummary(data) {
     document.getElementById('totalDelegated').textContent = `${data.totalDelegated.toFixed(2)} HASH`;
-    document.getElementById('earnedTokens').textContent = `${data.totalRewards.toFixed(2)} RV`;
+    document.getElementById('latestDelegation').textContent = data.delegationHistory.length > 0 
+        ? `${data.delegationHistory[0].amount.toFixed(2)} HASH` 
+        : '0 HASH';
 }
 
-function updateRewardHistory(data) {
+function updateDelegationHistory(data) {
     const tbody = document.getElementById('rewardHistory');
     tbody.innerHTML = '';
     
-    if (data.rewardHistory.length === 0) {
+    if (!data.delegationHistory || data.delegationHistory.length === 0) {
         const row = tbody.insertRow();
         row.innerHTML = `
-            <td colspan="3" class="text-center">No rewards history found</td>
+            <td colspan="3" class="text-center">No delegation history found</td>
         `;
         return;
     }
     
-    data.rewardHistory.forEach(reward => {
+    data.delegationHistory.forEach(delegation => {
         const row = tbody.insertRow();
         row.innerHTML = `
-            <td>${new Date(reward.timestamp).toLocaleDateString()}</td>
-            <td>${reward.amount.toFixed(2)} RV</td>
-            <td><span class="badge bg-${reward.status === 'pending' ? 'warning' : 'success'}">
-                ${reward.status.charAt(0).toUpperCase() + reward.status.slice(1)}
-            </span></td>
+            <td>${new Date(delegation.timestamp).toLocaleDateString()}</td>
+            <td>${delegation.amount.toFixed(2)} HASH</td>
+            <td><a href="https://explorer.provenance.io/tx/${delegation.tx_hash}" target="_blank" 
+                   class="btn btn-sm btn-outline-primary">
+                View Transaction
+            </a></td>
         `;
     });
 }
@@ -77,26 +80,31 @@ function showLoading(show) {
 }
 
 // Event Listeners
-document.getElementById('walletForm').addEventListener('submit', async (event) => {
-    event.preventDefault();
-    
-    const walletAddress = document.getElementById('walletAddress').value.trim();
-    if (!validateWalletAddress(walletAddress)) {
-        showError('Invalid wallet address format. Please enter a valid Provenance address starting with "pb".');
-        return;
-    }
-    
-    showLoading(true);
-    document.getElementById('rewardsContent').classList.add('d-none');
-    
-    try {
-        const data = await fetchRewardsData(walletAddress);
-        document.getElementById('rewardsContent').classList.remove('d-none');
-        updateRewardsSummary(data);
-        updateRewardHistory(data);
-    } catch (error) {
-        showError('Failed to fetch rewards data. Please try again later.');
-    } finally {
-        showLoading(false);
+document.addEventListener('DOMContentLoaded', () => {
+    const walletForm = document.getElementById('walletForm');
+    if (walletForm) {
+        walletForm.addEventListener('submit', async (event) => {
+            event.preventDefault();
+            
+            const walletAddress = document.getElementById('walletAddress').value.trim();
+            if (!validateWalletAddress(walletAddress)) {
+                showError('Invalid wallet address format. Please enter a valid Provenance address starting with "pb".');
+                return;
+            }
+            
+            showLoading(true);
+            document.getElementById('rewardsContent').classList.add('d-none');
+            
+            try {
+                const data = await fetchDelegationData(walletAddress);
+                document.getElementById('rewardsContent').classList.remove('d-none');
+                updateDelegationSummary(data);
+                updateDelegationHistory(data);
+            } catch (error) {
+                showError('Failed to fetch delegation data. Please try again later.');
+            } finally {
+                showLoading(false);
+            }
+        });
     }
 });
