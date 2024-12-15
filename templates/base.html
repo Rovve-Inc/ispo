@@ -37,6 +37,32 @@
         </div>
     </nav>
 
+    <!-- Wallet Selection Modal -->
+    <div class="modal fade" id="walletModal" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Select a Wallet Provider</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="d-grid gap-3">
+                        <button class="btn btn-outline-primary btn-lg d-flex align-items-center justify-content-center gap-2" 
+                                onclick="connectSelectedWallet('leap')">
+                            <img src="https://leapwallet.io/favicon.ico" alt="Leap Wallet" height="30">
+                            Leap Wallet
+                        </button>
+                        <button class="btn btn-outline-primary btn-lg d-flex align-items-center justify-content-center gap-2" 
+                                onclick="connectSelectedWallet('figure')">
+                            <img src="https://www.figure.com/favicon.ico" alt="Figure Wallet" height="30">
+                            Figure Wallet
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <main class="container my-4">
         {% block content %}{% endblock %}
     </main>

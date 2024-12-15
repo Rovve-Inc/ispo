@@ -3,17 +3,32 @@ let rewardsChart = null;
 
 async function connectWallet() {
     try {
-        if (window.provenance) {
-            wallet = await window.provenance.connect();
-            document.getElementById('walletAlert').style.display = 'none';
-            document.getElementById('rewardsContent').style.display = 'block';
-            loadRewardsData();
+        const modal = new bootstrap.Modal(document.getElementById('walletModal'));
+        modal.show();
+    } catch (error) {
+        console.error('Error showing wallet modal:', error);
+        alert('Failed to show wallet selection');
+    }
+}
+
+async function connectSelectedWallet(walletType) {
+    try {
+        if (walletType === 'leap' && window.leap) {
+            wallet = await window.leap.connect();
+        } else if (walletType === 'figure' && window.figure) {
+            wallet = await window.figure.connect();
         } else {
-            alert('Please install Provenance wallet extension');
+            throw new Error(`Please install ${walletType === 'leap' ? 'Leap' : 'Figure'} wallet extension`);
         }
+
+        document.getElementById('walletAlert').style.display = 'none';
+        document.getElementById('rewardsContent').style.display = 'block';
+        const modal = bootstrap.Modal.getInstance(document.getElementById('walletModal'));
+        modal.hide();
+        loadRewardsData();
     } catch (error) {
         console.error('Error connecting wallet:', error);
-        alert('Failed to connect wallet');
+        alert(error.message || 'Failed to connect wallet');
     }
 }
 
