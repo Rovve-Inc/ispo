@@ -1,54 +1,59 @@
 {% extends "base.html" %}
 
-{% block title %}Delegate{% endblock %}
+{% block title %}How to Delegate{% endblock %}
 
 {% block content %}
 <div class="row mb-4">
     <div class="col-md-8 offset-md-2">
         <div class="card">
             <div class="card-body">
-                <h2 class="card-title text-center mb-4">Delegate HASH Tokens</h2>
+                <h2 class="card-title text-center mb-4">How to Delegate HASH Tokens</h2>
                 
-                <div id="walletAlert" class="alert alert-warning" role="alert">
-                    Please connect your wallet to delegate tokens.
+                <div class="alert alert-info mb-4">
+                    <h5 class="alert-heading">Important Information</h5>
+                    <p class="mb-0">Delegate your HASH tokens using Provenance Explorer to participate in the ISPO and earn RV tokens.</p>
                 </div>
-                
-                <form id="delegateForm" class="needs-validation" novalidate style="display: none;">
-                    <div class="mb-3">
-                        <label for="delegationAmount" class="form-label">Amount to Delegate (HASH)</label>
-                        <input type="number" class="form-control" id="delegationAmount" required min="100">
-                        <div class="form-text">Minimum delegation: 100 HASH</div>
+
+                <div class="step-guide">
+                    <h5 class="mb-3">Follow these steps to delegate:</h5>
+                    <ol class="list-group list-group-numbered mb-4">
+                        <li class="list-group-item">
+                            <h6 class="mb-2">Visit Provenance Explorer</h6>
+                            <p class="mb-0">Navigate to the <a href="https://explorer.provenance.io/validators" target="_blank">Provenance Blockchain Explorer</a></p>
+                        </li>
+                        <li class="list-group-item">
+                            <h6 class="mb-2">Connect Your Wallet</h6>
+                            <p class="mb-0">Click "Connect Wallet" in the upper right corner and select your wallet type (Provenance or Figure Wallet)</p>
+                        </li>
+                        <li class="list-group-item">
+                            <h6 class="mb-2">Find Our Validator</h6>
+                            <p class="mb-0">Click the "Staking" menu option and locate the Rovve validator in the list</p>
+                        </li>
+                        <li class="list-group-item">
+                            <h6 class="mb-2">Delegate Tokens</h6>
+                            <p class="mb-0">Click "Delegate" next to our validator and enter your desired HASH amount (minimum 100 HASH)</p>
+                        </li>
+                        <li class="list-group-item">
+                            <h6 class="mb-2">Sign Transaction</h6>
+                            <p class="mb-0">Review and sign the delegation transaction in your wallet</p>
+                        </li>
+                    </ol>
+
+                    <div class="alert alert-success mb-4">
+                        <h5 class="alert-heading">Reward Structure</h5>
+                        <ul class="list-unstyled mb-0">
+                            <li>• 5% of total RV token supply allocated to ISPO participants</li>
+                            <li>• 60% higher rewards for first 3 months (Jan 15 - Apr 15, 2025)</li>
+                            <li>• Rewards based on delegation amount and duration</li>
+                        </ul>
                     </div>
-                    
-                    <div class="mb-3">
-                        <label class="form-label">Estimated Rewards</label>
-                        <div class="card bg-light">
-                            <div class="card-body">
-                                <div class="row">
-                                    <div class="col-6">
-                                        <p class="mb-1">RV Tokens:</p>
-                                        <h4 id="estimatedRvTokens">0 RV</h4>
-                                    </div>
-                                    <div class="col-6">
-                                        <p class="mb-1">Early Bonus:</p>
-                                        <h4 id="earlyBonus">0%</h4>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
+
+                    <div class="text-center">
+                        <a href="https://explorer.provenance.io/validators" target="_blank" class="btn btn-primary btn-lg">
+                            Go to Provenance Explorer
+                        </a>
                     </div>
-                    
-                    <div class="mb-3">
-                        <div class="form-check">
-                            <input class="form-check-input" type="checkbox" id="termsCheck" required>
-                            <label class="form-check-label" for="termsCheck">
-                                I understand that delegated tokens will be locked for the ISPO duration
-                            </label>
-                        </div>
-                    </div>
-                    
-                    <button type="submit" class="btn btn-primary w-100" id="delegateButton">Delegate Tokens</button>
-                </form>
+                </div>
             </div>
         </div>
     </div>
@@ -58,25 +63,22 @@
     <div class="col-md-8 offset-md-2">
         <div class="card">
             <div class="card-body">
-                <h5 class="card-title">Delegation History</h5>
-                <div class="table-responsive">
-                    <table class="table">
-                        <thead>
-                            <tr>
-                                <th>Date</th>
-                                <th>Amount</th>
-                                <th>Status</th>
-                                <th>Transaction</th>
-                            </tr>
-                        </thead>
-                        <tbody id="delegationHistory">
-                        </tbody>
-                    </table>
-                </div>
+                <h5 class="card-title">Need Help?</h5>
+                <p>For detailed staking instructions, refer to these guides:</p>
+                <ul class="list-unstyled">
+                    <li>
+                        <a href="https://provenance.io/learn/posts/staking-hash/" target="_blank" class="text-decoration-none">
+                            <i class="bi bi-link-45deg"></i> Provenance Official Staking Guide
+                        </a>
+                    </li>
+                    <li>
+                        <a href="https://chorus.one/articles/how-to-stake-hash-provenance" target="_blank" class="text-decoration-none">
+                            <i class="bi bi-link-45deg"></i> Chorus One Staking Guide
+                        </a>
+                    </li>
+                </ul>
             </div>
         </div>
     </div>
 </div>
-
-<script src="/static/js/delegation.js"></script>
 {% endblock %}
