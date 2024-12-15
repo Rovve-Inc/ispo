@@ -65,7 +65,24 @@ def get_validator_stats():
 @app.route('/api/delegations/<wallet_address>')
 def get_delegations(wallet_address):
     try:
-        # Get delegations for the wallet
+        # For testing, create a sample delegation if none exists
+        existing_delegation = Delegation.query.filter_by(
+            wallet_address=wallet_address
+        ).first()
+        
+        if not existing_delegation:
+            # Create sample delegation data for testing
+            sample_delegation = Delegation(
+                wallet_address=wallet_address,
+                amount=1000000,  # 1M HASH
+                timestamp=datetime.utcnow(),
+                tx_hash="sample_tx_hash",
+                status='active'
+            )
+            db.session.add(sample_delegation)
+            db.session.commit()
+        
+        # Get all delegations for the wallet
         delegations = Delegation.query.filter_by(
             wallet_address=wallet_address
         ).order_by(Delegation.timestamp.desc()).all()
