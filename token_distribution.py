@@ -7,9 +7,9 @@ from config import Config
 class TokenDistributionManager:
     def __init__(self):
         self.logger = logging.getLogger('token_distribution')
-        self.ispo_start = datetime.strptime(Config.ISPO_START_DATE, '%Y-%m-%d')
-        self.ispo_end = datetime.strptime(Config.ISPO_END_DATE, '%Y-%m-%d')
-        self.early_period_end = self.ispo_start + timedelta(days=90)  # First 3 months
+        self.ispo_start = Config.ISPO_START_DATE
+        self.ispo_end = Config.ISPO_END_DATE
+        self.early_period_end = Config.ISPO_EARLY_BONUS_END_DATE
         
     def calculate_rewards(self, delegation):
         """Calculate RV token rewards for a delegation"""

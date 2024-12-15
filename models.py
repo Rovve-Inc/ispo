@@ -28,9 +28,14 @@ class ValidatorStatus(db.Model):
     total_delegated = db.Column(db.Numeric(precision=20, scale=6), default=0)
     uptime = db.Column(db.Float, default=100.0)
     last_updated = db.Column(db.DateTime, default=datetime.utcnow)
-    active_delegators = db.Column(db.Integer, default=0)
     blocks_signed = db.Column(db.Integer, default=0)
     commission_rate = db.Column(db.Float, default=5.0)  # 5% default commission
+    jailed = db.Column(db.Boolean, default=False)
+    min_self_delegation = db.Column(db.Numeric(precision=20, scale=6), default=500000)
+    operator_address = db.Column(db.String(50))
+    consensus_pubkey = db.Column(db.String(100))
+    missed_blocks = db.Column(db.Integer, default=0)
+    signing_info = db.Column(db.JSON)
 class Referral(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     referrer_wallet = db.Column(db.String(44), nullable=False)
