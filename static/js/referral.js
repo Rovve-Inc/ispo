@@ -42,7 +42,10 @@ document.addEventListener('DOMContentLoaded', function() {
                 if (referralCodeInput && referralDisplay) {
                     referralCodeInput.value = data.referral_code;
                     referralDisplay.classList.remove('d-none');
-                    showSuccess(`Referral code generated successfully! Your code is: ${data.referral_code}`, generateForm);
+                    showSuccess(`Your referral code has been generated! Share it with others to earn bonus rewards.`, generateForm);
+                    
+                    // Keep the referral code visible by scrolling to it
+                    referralDisplay.scrollIntoView({ behavior: 'smooth', block: 'center' });
                 } else {
                     throw new Error('Could not display referral code. Please try again.');
                 }
