@@ -42,6 +42,10 @@ def delegate():
 def about():
     return render_template('about.html')
 
+@app.route('/delegations')
+def delegations():
+    return render_template('delegations.html')
+
 @app.route('/api/validator/stats')
 def get_validator_stats():
     try:
