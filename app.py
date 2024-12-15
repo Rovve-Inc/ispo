@@ -65,44 +65,32 @@ def get_validator_stats():
 @app.route('/api/delegations/<wallet_address>')
 def get_delegations(wallet_address):
     try:
-        # For testing, create a sample delegation if none exists
-        existing_delegation = Delegation.query.filter_by(
-            wallet_address=wallet_address
-        ).first()
+        # Query Provenance API for delegations
+        validator_address = "pbvaloper1lzgdym2g6vhp2w7298hvmcdv6aatxeajrj694m"
+        api_url = f"{app.config['REST_ENDPOINT']}/cosmos/staking/v1beta1/delegators/{wallet_address}/delegations"
         
-        if not existing_delegation:
-            # Create sample delegation data for testing
-            sample_delegation = Delegation(
-                wallet_address=wallet_address,
-                amount=1000000,  # 1M HASH
-                timestamp=datetime.utcnow(),
-                tx_hash="sample_tx_hash",
-                status='active'
-            )
-            db.session.add(sample_delegation)
-            db.session.commit()
+        response = requests.get(api_url)
+        if response.status_code != 200:
+            return jsonify({'error': 'Failed to fetch delegation data'}), 500
+            
+        data = response.json()
+        delegations = []
+        total_delegated = 0
         
-        # Get all delegations for the wallet
-        delegations = Delegation.query.filter_by(
-            wallet_address=wallet_address
-        ).order_by(Delegation.timestamp.desc()).all()
-        
-        # Calculate total delegated
-        total_delegated = sum(float(d.amount) for d in delegations)
-        
-        # Format delegation history
-        delegation_history = []
-        for delegation in delegations:
-            delegation_history.append({
-                'timestamp': delegation.timestamp.isoformat(),
-                'amount': float(delegation.amount),
-                'tx_hash': delegation.tx_hash,
-                'status': delegation.status
-            })
+        # Process each delegation
+        for delegation in data.get('delegation_responses', []):
+            if delegation['delegation']['validator_address'] == validator_address:
+                amount = float(delegation['balance']['amount']) / 1e6  # Convert from uHash to HASH
+                delegations.append({
+                    'timestamp': datetime.utcnow().isoformat(),  # Current time as we don't get timestamp from API
+                    'amount': amount,
+                    'status': 'active'
+                })
+                total_delegated += amount
         
         return jsonify({
             'totalDelegated': total_delegated,
-            'delegationHistory': delegation_history
+            'delegationHistory': delegations
         })
         
     except Exception as e:
