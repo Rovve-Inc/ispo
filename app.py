@@ -220,16 +220,31 @@ def use_referral(referral_code):
         if not wallet_address:
             return jsonify({'error': 'Wallet address is required'}), 400
 
+        # Validate wallet address format
+        if not wallet_address.startswith('pb') or len(wallet_address) != 42:
+            return jsonify({'error': 'Invalid wallet address format'}), 400
+
+        # Check if referral code exists and is active
         referral = Referral.query.filter_by(
-            referral_code=referral_code,
-            status='active'
+            referral_code=referral_code
         ).first()
 
         if not referral:
-            return jsonify({'error': 'Invalid or expired referral code'}), 404
+            return jsonify({'error': 'Invalid referral code'}), 404
 
-        if referral.referred_wallet:
-            return jsonify({'error': 'Referral code already used'}), 400
+        if referral.status != 'active':
+            return jsonify({'error': 'This referral code has expired or been used'}), 400
+
+        # Check if wallet is trying to use their own referral code
+        if referral.referrer_wallet == wallet_address:
+            return jsonify({'error': 'Cannot use your own referral code'}), 400
+
+        # Check if wallet has already used a referral code
+        existing_referral = Referral.query.filter_by(
+            referred_wallet=wallet_address
+        ).first()
+        if existing_referral:
+            return jsonify({'error': 'This wallet has already used a referral code'}), 400
 
         referral.referred_wallet = wallet_address
         referral.status = 'used'
@@ -242,7 +257,7 @@ def use_referral(referral_code):
 
     except Exception as e:
         logger.error(f"Error using referral code: {str(e)}")
-        return jsonify({'error': 'Failed to apply referral code'}), 500
+        return jsonify({'error': 'Failed to apply referral code. Please try again.'}), 500
 @app.route('/api/distribution/status/<wallet_address>')
 def get_distribution_status(wallet_address):
     try:

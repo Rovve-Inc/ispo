@@ -62,12 +62,12 @@ async function handleUseReferral(event) {
             body: JSON.stringify({ wallet_address: walletAddress })
         });
         
+        const data = await response.json();
+        
         if (!response.ok) {
-            const error = await response.json();
-            throw new Error(error.error || 'Failed to apply referral code');
+            throw new Error(data.error || 'Failed to apply referral code');
         }
         
-        const data = await response.json();
         showSuccess('Referral code applied successfully! You will receive a 5% bonus on your RV tokens.');
         
     } catch (error) {
