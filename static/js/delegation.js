@@ -4,26 +4,42 @@ async function generateQRCode() {
     try {
         // Format the connection data according to Figure's specifications
         const connectionData = {
-            dapp: "Rovve ISPO",
-            network: "provenance-mainnet",
-            version: "1.0.0",
-            chainId: "pio-mainnet-1",
-            callback: window.location.origin + "/wallet/callback"
+            type: "wallet_connect",
+            style: "figure",
+            dapp: {
+                name: "Rovve ISPO",
+                icon: window.location.origin + "/static/img/logo.svg"
+            },
+            network: {
+                chainId: "pio-mainnet-1",
+                name: "Provenance Mainnet",
+                rpc: "https://rpc.provenance.io",
+                rest: "https://api.provenance.io"
+            },
+            callback: {
+                success: window.location.origin + "/wallet/connect/success",
+                error: window.location.origin + "/wallet/connect/error"
+            }
         };
         
-        // Use Figure's QR code format
+        // Use Figure's QR code format with specific styling
         const qrData = btoa(JSON.stringify(connectionData));
         
-        // Generate QR code
+        // Generate QR code with Figure's styling
         const qrCodeDiv = document.getElementById('qrCode');
         qrCodeDiv.innerHTML = `
-            <img src="https://api.qrserver.com/v1/create-qr-code/?data=${encodeURIComponent(qrData)}&size=200x200" 
+            <img src="https://api.qrserver.com/v1/create-qr-code/?data=${encodeURIComponent(qrData)}&size=200x200&bgcolor=1a1b1e&color=ffffff&margin=2" 
                  alt="Wallet Connection QR Code" 
                  class="img-fluid">
         `;
         return qrData;
     } catch (error) {
         console.error('Error generating QR code:', error);
+        qrCodeDiv.innerHTML = `
+            <div class="alert alert-danger">
+                Failed to generate QR code. Please try again or use desktop wallet.
+            </div>
+        `;
         throw error;
     }
 }
@@ -57,6 +73,11 @@ async function connectSelectedWallet(walletType) {
                 coinDenom: "HASH",
                 coinMinimalDenom: "nhash",
                 coinDecimals: 9,
+                coinGeckoId: "provenance-blockchain"
+            },
+            walletUrlForStaking: "https://explorer.provenance.io/validators",
+            bip44: {
+                coinType: 505
             },
             bech32Config: {
                 bech32PrefixAccAddr: "pb",
@@ -70,17 +91,20 @@ async function connectSelectedWallet(walletType) {
                 coinDenom: "HASH",
                 coinMinimalDenom: "nhash",
                 coinDecimals: 9,
+                coinGeckoId: "provenance-blockchain"
             }],
             feeCurrencies: [{
                 coinDenom: "HASH",
                 coinMinimalDenom: "nhash",
                 coinDecimals: 9,
+                coinGeckoId: "provenance-blockchain",
+                gasPriceStep: {
+                    low: 1900,
+                    average: 2000,
+                    high: 2200
+                }
             }],
-            gasPriceStep: {
-                low: 1900,
-                average: 2000,
-                high: 2200
-            }
+            features: ["ibc-transfer", "ibc-go", "cosmwasm"]
         };
 
         if (walletType === 'leap') {
