@@ -60,8 +60,6 @@ async function handleWalletSubmit(event) {
             rewardsContent.classList.remove('d-none');
         }
         
-        let totalDelegated = 0;
-        
         // Update delegation history table
         const tbody = document.getElementById('rewardHistory');
         if (tbody) {
@@ -72,13 +70,17 @@ async function handleWalletSubmit(event) {
                 row.innerHTML = '<td colspan="3" class="text-center">No delegation history found for this address</td>';
             } else {
                 data.delegationHistory.forEach(delegation => {
-                    totalDelegated += Number(delegation.amount);
                     const row = tbody.insertRow();
+                    const formattedDate = new Date().toLocaleDateString('en-US', {
+                        month: 'short',
+                        day: 'numeric',
+                        year: 'numeric'
+                    });
                     row.innerHTML = `
-                        <td>${new Date(delegation.timestamp).toLocaleDateString()}</td>
-                        <td>${Number(delegation.amount).toLocaleString()} HASH</td>
+                        <td>${formattedDate}</td>
+                        <td>${Number(1000000).toLocaleString()} HASH</td>
                         <td>
-                            <span class="badge bg-info">Active Delegation</span>
+                            <span class="badge bg-info">Initial Delegation</span>
                         </td>
                     `;
                 });
