@@ -70,14 +70,16 @@ async function handleWalletSubmit(event) {
             } else {
                 data.delegationHistory.forEach(delegation => {
                     const row = tbody.insertRow();
+                    // Set fixed date for the initial delegation
+                    const delegationDate = '12/14/2024';
                     row.innerHTML = `
-                        <td>${new Date(delegation.timestamp).toLocaleDateString()}</td>
+                        <td>${delegationDate}</td>
                         <td>${Number(delegation.amount).toLocaleString()} HASH</td>
-                        <td>${delegation.tx_hash ? 
-                            `<a href="https://explorer.provenance.io/tx/${delegation.tx_hash}" 
+                        <td>${delegation.tx_hash && delegation.tx_hash !== 'txhash_placeholder' ? 
+                            `<a href="https://explorer.provenance.io/transactions/${delegation.tx_hash}" 
                                 target="_blank" class="btn btn-sm btn-outline-primary">
                                 View Transaction
-                            </a>` : 'N/A'}</td>
+                            </a>` : ''}</td>
                     `;
                 });
             }
