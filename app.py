@@ -1,18 +1,13 @@
 import os
 from flask import Flask, render_template, jsonify
-from flask_sqlalchemy import SQLAlchemy
-from sqlalchemy.orm import DeclarativeBase
 import logging
 from datetime import datetime
 
+from db import db
+from models import Delegation, ValidatorStatus
+
 # Set up logging
 logging.basicConfig(level=logging.DEBUG)
-
-# Initialize SQLAlchemy with a custom base class
-class Base(DeclarativeBase):
-    pass
-
-db = SQLAlchemy(model_class=Base)
 
 # Create the app
 app = Flask(__name__)
@@ -27,8 +22,6 @@ app.config["SQLALCHEMY_ENGINE_OPTIONS"] = {
 
 # Initialize the app with the extension
 db.init_app(app)
-
-from models import Delegation, ValidatorStatus
 
 @app.route('/')
 def index():
