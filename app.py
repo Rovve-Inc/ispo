@@ -1,83 +1,101 @@
 import os
-from flask import Flask, render_template, jsonify, request
+from flask import Flask, render_template, jsonify
+from flask_sqlalchemy import SQLAlchemy
+from sqlalchemy.orm import DeclarativeBase
 import logging
+from datetime import datetime
 
 logging.basicConfig(level=logging.DEBUG)
 
-def create_app():
-    app = Flask(__name__)
-    app.config.from_object('config.Config')
-    
-    from models import db, Delegation, Rewards
-    db.init_app(app)
-    
-    @app.route('/')
-    def index():
-        return render_template('index.html')
+# Initialize SQLAlchemy with a custom base class
+class Base(DeclarativeBase):
+    pass
 
-    @app.route('/delegate')
-    def delegate():
-        return render_template('delegate.html')
+db = SQLAlchemy(model_class=Base)
 
-    @app.route('/rewards')
-    def rewards():
-        return render_template('rewards.html')
+# Create the app
+app = Flask(__name__)
 
-    @app.route('/about')
-    def about():
-        return render_template('about.html')
+# Configure database
+app.config["SQLALCHEMY_DATABASE_URI"] = os.environ.get("DATABASE_URL")
+app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
+app.config["SQLALCHEMY_ENGINE_OPTIONS"] = {
+    "pool_recycle": 300,
+    "pool_pre_ping": True,
+}
 
-    @app.route('/api/delegate', methods=['POST'])
-    def handle_delegation():
-        data = request.json
-        wallet_address = data.get('wallet_address')
-        amount = data.get('amount')
-        
-        # Create new delegation record
-        delegation = Delegation(
-            wallet_address=wallet_address,
-            amount=amount,
-            status='pending'
-        )
-        db.session.add(delegation)
-        db.session.commit()
-        
-        return jsonify({'status': 'success', 'delegation_id': delegation.id})
+# Initialize the app with the extension
+db.init_app(app)
 
-    @app.route('/api/rewards/<wallet_address>')
-    def get_rewards(wallet_address):
+# Models
+class Delegation(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    wallet_address = db.Column(db.String(44), nullable=False)
+    amount = db.Column(db.Numeric(precision=20, scale=6), nullable=False)
+    timestamp = db.Column(db.DateTime, default=datetime.utcnow)
+    status = db.Column(db.String(20), default='active')
+    distributions = db.relationship('TokenDistribution', backref='delegation', lazy=True)
+
+class TokenDistribution(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    wallet_address = db.Column(db.String(44), nullable=False)
+    delegation_id = db.Column(db.Integer, db.ForeignKey('delegation.id'), nullable=False)
+    rv_tokens = db.Column(db.Numeric(precision=20, scale=6), nullable=False)
+    early_bonus = db.Column(db.Numeric(precision=5, scale=2), default=0)
+    status = db.Column(db.String(20), default='pending')
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    distribution_date = db.Column(db.DateTime)
+
+@app.route('/')
+def index():
+    return render_template('index.html')
+
+@app.route('/delegate')
+def delegate():
+    return render_template('delegate.html')
+
+@app.route('/rewards')
+def rewards():
+    return render_template('rewards.html')
+
+@app.route('/about')
+def about():
+    return render_template('about.html')
+
+@app.route('/api/rewards/<wallet_address>')
+def get_rewards(wallet_address):
+    try:
         # Get delegations and calculated RV token rewards
         delegations = Delegation.query.filter_by(wallet_address=wallet_address).all()
         distributions = TokenDistribution.query.filter_by(wallet_address=wallet_address).all()
         
-        total_rv_tokens = sum(float(d.rv_tokens) for d in distributions)
-        early_bonus = max((float(d.early_bonus) for d in distributions), default=0)
+        # Calculate totals
+        total_delegated = sum(float(d.amount) for d in delegations)
+        total_rewards = sum(float(d.rv_tokens) for d in distributions)
+        
+        # Format reward history
+        reward_history = []
+        for dist in distributions:
+            reward_history.append({
+                'timestamp': dist.created_at.isoformat(),
+                'type': 'Delegation Reward',
+                'amount': float(dist.rv_tokens),
+                'early_bonus': float(dist.early_bonus)
+            })
         
         return jsonify({
-            'delegations': [{
-                'amount': float(d.amount),
-                'timestamp': d.timestamp.isoformat(),
-                'status': d.status
-            } for d in delegations],
-            'rewards': {
-                'total_rv_tokens': total_rv_tokens,
-                'early_bonus_percentage': early_bonus,
-                'distribution_date': Config.ISPO_END_DATE,
-                'distributions': [{
-                    'rv_tokens': float(d.rv_tokens),
-                    'early_bonus': float(d.early_bonus),
-                    'status': d.status,
-                    'created_at': d.created_at.isoformat()
-                } for d in distributions]
-            }
+            'totalDelegated': total_delegated,
+            'totalRewards': total_rewards,
+            'rewardHistory': reward_history,
+            'distributionDate': '2025-09-15',  # ISPO end date
+            'earlyBonus': max((float(d.early_bonus) for d in distributions), default=0)
         })
-
-    return app
-
-app = create_app()
+        
+    except Exception as e:
+        logging.error(f"Error fetching rewards for {wallet_address}: {str(e)}")
+        return jsonify({'error': 'Failed to fetch rewards data'}), 500
 
 if __name__ == '__main__':
     with app.app_context():
-        from models import db
         db.create_all()
     app.run(host='0.0.0.0', port=5000, debug=True)

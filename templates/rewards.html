@@ -1,42 +1,47 @@
 {% extends "base.html" %}
 
-{% block title %}Rewards{% endblock %}
+{% block title %}Check Your ISPO Rewards{% endblock %}
 
 {% block content %}
 <div class="row mb-4">
     <div class="col-md-8 offset-md-2">
         <div class="card">
             <div class="card-body">
-                <h2 class="card-title text-center mb-4">Your ISPO Rewards</h2>
+                <h2 class="card-title text-center mb-4">Check Your ISPO Rewards</h2>
                 
-                <div id="walletAlert" class="alert alert-warning" role="alert">
-                    Please connect your wallet to view rewards.
+                <div class="alert alert-info mb-4">
+                    <h5 class="alert-heading">Important Information</h5>
+                    <p class="mb-0">To participate in the ISPO, delegate your HASH tokens using the <a href="https://explorer.provenance.io/validators" target="_blank" class="alert-link">Provenance Explorer</a>. Then use this page to track your rewards.</p>
                 </div>
+
+                <form id="walletForm" class="mb-4">
+                    <div class="input-group">
+                        <input type="text" class="form-control form-control-lg" id="walletAddress" 
+                               placeholder="Enter your Provenance wallet address (pb...)" 
+                               pattern="^pb[a-zA-Z0-9]{39}$"
+                               required>
+                        <button class="btn btn-primary btn-lg" type="submit">Check Rewards</button>
+                    </div>
+                    <div class="form-text">Example: pb1... (44 characters)</div>
+                </form>
                 
-                <div id="rewardsContent" style="display: none;">
+                <div id="rewardsContent" class="d-none">
                     <div class="row mb-4">
                         <div class="col-md-6">
                             <div class="card bg-light">
-                                <div class="card-body">
-                                    <h5 class="card-title">Total Delegated</h5>
-                                    <h3 id="totalDelegated">0 HASH</h3>
+                                <div class="card-body text-center">
+                                    <h5 class="card-title">Total HASH Delegated</h5>
+                                    <h3 id="totalDelegated" class="mb-0">0 HASH</h3>
                                 </div>
                             </div>
                         </div>
                         <div class="col-md-6">
                             <div class="card bg-light">
-                                <div class="card-body">
-                                    <h5 class="card-title">Earned RV Tokens</h5>
-                                    <h3 id="earnedTokens">0 RV</h3>
+                                <div class="card-body text-center">
+                                    <h5 class="card-title">Estimated RV Token Rewards</h5>
+                                    <h3 id="earnedTokens" class="mb-0">0 RV</h3>
                                 </div>
                             </div>
-                        </div>
-                    </div>
-                    
-                    <div class="card mb-4">
-                        <div class="card-body">
-                            <h5 class="card-title">Rewards Progress</h5>
-                            <canvas id="rewardsChart"></canvas>
                         </div>
                     </div>
                     
@@ -48,7 +53,6 @@
                                     <thead>
                                         <tr>
                                             <th>Date</th>
-                                            <th>Type</th>
                                             <th>Amount</th>
                                             <th>Status</th>
                                         </tr>
