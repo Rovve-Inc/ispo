@@ -1,0 +1,40 @@
+/* Custom styles to complement Bootstrap dark theme */
+.stat-card {
+    background-color: var(--bs-dark);
+    padding: 1.5rem;
+    border-radius: 0.5rem;
+    height: 100%;
+}
+
+.card {
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    background-color: var(--bs-dark);
+}
+
+.card-header {
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    background-color: rgba(255, 255, 255, 0.05);
+}
+
+/* Improve address input readability */
+input[type="text"] {
+    font-family: monospace;
+    letter-spacing: 0.5px;
+}
+
+/* Loading spinner animation */
+.fa-spin {
+    animation: fa-spin 1s infinite linear;
+}
+
+@keyframes fa-spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .stat-card {
+        padding: 1rem;
+    }
+}
