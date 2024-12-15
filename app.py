@@ -1,10 +1,15 @@
 import os
+import requests
 from flask import Flask, render_template, jsonify
 import logging
 from datetime import datetime
 
 from db import db
 from models import Delegation, ValidatorStatus
+
+# Set up detailed logging
+logging.basicConfig(level=logging.DEBUG)
+logger = logging.getLogger(__name__)
 
 # Set up logging
 logging.basicConfig(level=logging.DEBUG)
@@ -69,36 +74,48 @@ def get_validator_stats():
 def get_delegations(wallet_address):
     try:
         # Query Provenance API for delegations
-        validator_address = "pbvaloper1lzgdym2g6vhp2w7298hvmcdv6aatxeajrj694m"
-        api_url = f"{app.config['REST_ENDPOINT']}/cosmos/staking/v1beta1/delegators/{wallet_address}/delegations"
+        validator_address = app.config['VALIDATOR_ADDRESS']
+        api_url = f"{app.config['REST_ENDPOINT']}/staking/delegators/{wallet_address}/delegations"
         
-        response = requests.get(api_url)
+        logger.debug(f"Querying Provenance API: {api_url}")
+        response = requests.get(api_url, timeout=10)
+        
         if response.status_code != 200:
-            return jsonify({'error': 'Failed to fetch delegation data'}), 500
+            logger.error(f"API request failed with status {response.status_code}: {response.text}")
+            return jsonify({'error': 'Failed to fetch delegation data from Provenance'}), 500
             
         data = response.json()
+        logger.debug(f"Received delegation data: {data}")
+        
         delegations = []
         total_delegated = 0
         
         # Process each delegation
-        for delegation in data.get('delegation_responses', []):
-            if delegation['delegation']['validator_address'] == validator_address:
-                amount = float(delegation['balance']['amount']) / 1e6  # Convert from uHash to HASH
+        for delegation in data.get('result', []):
+            if delegation.get('delegation', {}).get('validator_address') == validator_address:
+                amount = float(delegation['delegation'].get('shares', 0)) / 1e6  # Convert from uHash to HASH
+                tx_hash = delegation.get('transaction_hash')
+                
                 delegations.append({
-                    'timestamp': datetime.utcnow().isoformat(),  # Current time as we don't get timestamp from API
+                    'timestamp': delegation.get('delegation_time', datetime.utcnow().isoformat()),
                     'amount': amount,
+                    'tx_hash': tx_hash,
                     'status': 'active'
                 })
                 total_delegated += amount
         
+        logger.debug(f"Processed delegations: {delegations}")
         return jsonify({
             'totalDelegated': total_delegated,
             'delegationHistory': delegations
         })
         
+    except requests.RequestException as e:
+        logger.error(f"Network error fetching delegations for {wallet_address}: {str(e)}")
+        return jsonify({'error': 'Network error while fetching delegation data'}), 500
     except Exception as e:
-        logging.error(f"Error fetching delegations for {wallet_address}: {str(e)}")
-        return jsonify({'error': 'Failed to fetch delegation data'}), 500
+        logger.error(f"Error processing delegations for {wallet_address}: {str(e)}")
+        return jsonify({'error': 'Failed to process delegation data'}), 500
 
 if __name__ == '__main__':
     with app.app_context():

@@ -16,6 +16,10 @@ class Config:
     # Provenance Configuration
     CHAIN_ID = "pio-mainnet-1"
     RPC_ENDPOINT = "https://rpc.provenance.io"
-    REST_ENDPOINT = "https://api.provenance.io/v1"
-    LCD_ENDPOINT = "https://api.provenance.io/v1"  # Needed for delegation queries
+    REST_ENDPOINT = "https://api.provenance.io"
+    LCD_ENDPOINT = "https://api.provenance.io"  # Needed for delegation queries
     EXPLORER_URL = "https://explorer.provenance.io"
+    
+    # Test Validator Configuration
+    VALIDATOR_ADDRESS = "pbvaloper1lzgdym2g6vhp2w7298hvmcdv6aatxeajrj694m"
+    VALIDATOR_MONIKER = "Rovve ISPO"
