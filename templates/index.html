@@ -7,31 +7,33 @@
     <div class="col-md-8 offset-md-2 text-center">
         <h1 class="display-4 mb-4">Rovve ISPO</h1>
         <p class="lead">Participate in the Initial Stake Pool Offering to earn $RV tokens</p>
+        <p class="text-muted">5% of total $RV token supply dedicated to ISPO participants</p>
     </div>
 </div>
 
 <div class="row mb-4">
     <div class="col-md-4">
         <div class="card">
-            <div class="card-body">
-                <h5 class="card-title">Total Staked</h5>
+            <div class="card-body text-center">
+                <h5 class="card-title">Total HASH Staked</h5>
                 <p class="card-text display-6" id="totalStaked">Loading...</p>
             </div>
         </div>
     </div>
     <div class="col-md-4">
         <div class="card">
-            <div class="card-body">
-                <h5 class="card-title">Participants</h5>
+            <div class="card-body text-center">
+                <h5 class="card-title">Total Participants</h5>
                 <p class="card-text display-6" id="totalParticipants">Loading...</p>
             </div>
         </div>
     </div>
     <div class="col-md-4">
         <div class="card">
-            <div class="card-body">
-                <h5 class="card-title">Days Remaining</h5>
+            <div class="card-body text-center">
+                <h5 class="card-title">Days Until End</h5>
                 <p class="card-text display-6" id="daysRemaining">Loading...</p>
+                <small class="text-muted">Ending Sep 15, 2025</small>
             </div>
         </div>
     </div>
@@ -39,49 +41,54 @@
 
 <div class="row mb-4">
     <div class="col-md-6">
-        <div class="card">
+        <div class="card h-100">
             <div class="card-body">
-                    <h5 class="card-title">ISPO Timeline & Allocation</h5>
-                    <div class="alert alert-primary mb-3">
-                        <strong>$RV Token ISPO Allocation:</strong> 5% of total supply
-                    </div>
-                    <div class="progress mb-3">
-                        <div class="progress-bar" role="progressbar" id="ispoProgress"></div>
-                    </div>
-                    <p class="text-muted">
-                        Start: January 15, 2025<br>
-                        End: September 15, 2025
-                    </p>
+                <h5 class="card-title">ISPO Timeline & Allocation</h5>
+                <div class="alert alert-primary mb-3">
+                    <strong>Total $RV Token ISPO Allocation:</strong> 5% of total supply
                 </div>
+                <div class="progress mb-3" style="height: 25px;">
+                    <div class="progress-bar bg-success" role="progressbar" style="width: 60%">
+                        First 3 Months (60%)
+                    </div>
+                    <div class="progress-bar bg-info" role="progressbar" style="width: 40%">
+                        Remaining Period
+                    </div>
+                </div>
+                <div class="alert alert-info">
+                    <p class="mb-2"><strong>Important Dates:</strong></p>
+                    <ul class="list-unstyled mb-0">
+                        <li>• Start: January 15, 2025</li>
+                        <li>• Early Rewards Period: Jan 15 - Apr 15, 2025</li>
+                        <li>• End: September 15, 2025</li>
+                    </ul>
+                </div>
+            </div>
         </div>
     </div>
     <div class="col-md-6">
-        <div class="card">
+        <div class="card h-100">
             <div class="card-body">
                 <h5 class="card-title">$RV Token Reward Structure</h5>
-                <div class="alert alert-info mb-3">
-                    <h6 class="mb-2">Escalating Rewards Timeline:</h6>
+                <div class="alert alert-success mb-3">
+                    <h6 class="mb-2">Enhanced Early Rewards:</h6>
                     <ul class="list-unstyled mb-0">
-                        <li>• First 3 months (Jan-Mar 2025): 60% of ISPO allocation</li>
-                        <li>• Remaining 5 months: Gradually decreasing rewards</li>
+                        <li>• First 3 months: 60% of total ISPO allocation</li>
+                        <li>• Higher rewards for early participants</li>
+                        <li>• Rewards based on delegation size and duration</li>
                     </ul>
                 </div>
-                <p>Early participants benefit from:</p>
-                <ul class="list-group mb-3">
-                    <li class="list-group-item">
-                        <i class="bi bi-check-circle-fill text-success"></i>
-                        Higher reward rates during initial months
-                    </li>
-                    <li class="list-group-item">
-                        <i class="bi bi-check-circle-fill text-success"></i>
-                        Support for both $RV token distribution and $HASH ecosystem
-                    </li>
-                    <li class="list-group-item">
-                        <i class="bi bi-check-circle-fill text-success"></i>
-                        Transparent, duration-based reward calculation
-                    </li>
-                </ul>
-                <canvas id="rewardChart"></canvas>
+                <div class="card bg-dark mb-3">
+                    <div class="card-body">
+                        <h6 class="card-title">Why Participate Early?</h6>
+                        <ul class="list-unstyled mb-0">
+                            <li>✓ Maximum $RV token rewards</li>
+                            <li>✓ Support Provenance ecosystem growth</li>
+                            <li>✓ Early access to Rovve protocol</li>
+                        </ul>
+                    </div>
+                </div>
+                <canvas id="rewardChart" height="150"></canvas>
             </div>
         </div>
     </div>
