@@ -9,7 +9,16 @@ document.addEventListener('DOMContentLoaded', function() {
         generateForm.addEventListener('submit', async function(event) {
             event.preventDefault();
             
+            // Remove any existing alerts
+            removeExistingAlerts();
+            
             const walletAddress = document.getElementById('walletAddress').value.trim();
+            
+            // Validate wallet address format
+            if (!/^pb[a-zA-Z0-9]{39}$/.test(walletAddress)) {
+                showError('Invalid wallet address format', generateForm);
+                return;
+            }
             
             try {
                 const response = await fetch('/api/referral/generate', {
@@ -33,14 +42,14 @@ document.addEventListener('DOMContentLoaded', function() {
                 if (referralCodeInput && referralDisplay) {
                     referralCodeInput.value = data.referral_code;
                     referralDisplay.classList.remove('d-none');
-                    showSuccess(`Referral code generated successfully! Your code is: ${data.referral_code}`);
+                    showSuccess(`Referral code generated successfully! Your code is: ${data.referral_code}`, generateForm);
                 } else {
                     throw new Error('Could not display referral code. Please try again.');
                 }
                 
             } catch (error) {
                 console.error('Error:', error);
-                showError(error.message || 'Failed to generate referral code. Please try again.');
+                showError(error.message || 'Failed to generate referral code. Please try again.', generateForm);
             }
         });
     }
@@ -49,8 +58,17 @@ document.addEventListener('DOMContentLoaded', function() {
         useForm.addEventListener('submit', async function(event) {
             event.preventDefault();
             
+            // Remove any existing alerts
+            removeExistingAlerts();
+            
             const walletAddress = document.getElementById('referredWallet').value.trim();
             const referralCode = document.getElementById('referralCodeInput').value.trim();
+            
+            // Validate wallet address format
+            if (!/^pb[a-zA-Z0-9]{39}$/.test(walletAddress)) {
+                showError('Invalid wallet address format', useForm);
+                return;
+            }
             
             try {
                 const response = await fetch(`/api/referral/${referralCode}/use`, {
@@ -67,23 +85,20 @@ document.addEventListener('DOMContentLoaded', function() {
                     throw new Error(data.error || 'Failed to apply referral code');
                 }
                 
-                showSuccess('Referral code applied successfully! You will receive a 5% bonus on your RV tokens.');
+                showSuccess('Referral code applied successfully! You will receive a 5% bonus on your RV tokens.', useForm);
                 
                 // Clear the form
                 useForm.reset();
                 
             } catch (error) {
                 console.error('Error:', error);
-                showError(error.message || 'Failed to apply referral code. Please try again.');
+                showError(error.message || 'Failed to apply referral code. Please try again.', useForm);
             }
         });
     }
 });
 
-function showError(message) {
-    // Remove any existing alerts
-    removeExistingAlerts();
-    
+function showError(message, targetForm) {
     const alertDiv = document.createElement('div');
     alertDiv.className = 'alert alert-danger alert-dismissible fade show mt-3';
     alertDiv.innerHTML = `
@@ -91,17 +106,13 @@ function showError(message) {
         <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
     `;
     
-    // Insert the alert before the first form found
-    const form = document.querySelector('form');
-    if (form && form.parentNode) {
-        form.parentNode.insertBefore(alertDiv, form);
+    // Insert the alert after the form
+    if (targetForm && targetForm.parentNode) {
+        targetForm.insertAdjacentElement('afterend', alertDiv);
     }
 }
 
-function showSuccess(message) {
-    // Remove any existing alerts
-    removeExistingAlerts();
-    
+function showSuccess(message, targetForm) {
     const alertDiv = document.createElement('div');
     alertDiv.className = 'alert alert-success alert-dismissible fade show mt-3';
     alertDiv.innerHTML = `
@@ -109,10 +120,9 @@ function showSuccess(message) {
         <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
     `;
     
-    // Insert the alert before the first form found
-    const form = document.querySelector('form');
-    if (form && form.parentNode) {
-        form.parentNode.insertBefore(alertDiv, form);
+    // Insert the alert after the form
+    if (targetForm && targetForm.parentNode) {
+        targetForm.insertAdjacentElement('afterend', alertDiv);
     }
 }
 
