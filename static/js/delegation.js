@@ -75,12 +75,7 @@ async function handleWalletSubmit(event) {
                     row.innerHTML = `
                         <td>${delegationDate}</td>
                         <td>${Number(delegation.amount).toLocaleString()} HASH</td>
-                        <td>
-                            <a href="https://explorer.provenance.io/tx/E080B24DF8C7E74FAEACC0524BE4FB59F3D441E3621DE94EEEB7524DB5F15A65" 
-                                target="_blank" class="btn btn-sm btn-outline-primary">
-                                View Transaction
-                            </a>
-                        </td>
+                        <td>Initial Delegation</td>
                     `;
                 });
             }
