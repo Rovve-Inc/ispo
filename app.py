@@ -178,6 +178,69 @@ def get_rewards(wallet_address):
         logger.error(f"Error calculating rewards for {wallet_address}: {str(e)}")
         return jsonify({'error': 'Failed to calculate rewards'}), 500
 
+@app.route('/referral')
+def referral():
+    return render_template('referral.html')
+
+@app.route('/api/referral/generate', methods=['POST'])
+def generate_referral():
+    try:
+        wallet_address = request.json.get('wallet_address')
+        if not wallet_address:
+            return jsonify({'error': 'Wallet address is required'}), 400
+
+        # Generate unique referral code
+        while True:
+            code = ''.join(random.choices(string.ascii_uppercase + string.digits, k=8))
+            if not Referral.query.filter_by(referral_code=code).first():
+                break
+
+        referral = Referral(
+            referrer_wallet=wallet_address,
+            referral_code=code
+        )
+        db.session.add(referral)
+        db.session.commit()
+
+        return jsonify({
+            'referral_code': code,
+            'bonus_percentage': float(referral.bonus_percentage)
+        })
+
+    except Exception as e:
+        logger.error(f"Error generating referral code: {str(e)}")
+        return jsonify({'error': 'Failed to generate referral code'}), 500
+
+@app.route('/api/referral/<referral_code>/use', methods=['POST'])
+def use_referral():
+    try:
+        wallet_address = request.json.get('wallet_address')
+        if not wallet_address:
+            return jsonify({'error': 'Wallet address is required'}), 400
+
+        referral = Referral.query.filter_by(
+            referral_code=referral_code,
+            status='active'
+        ).first()
+
+        if not referral:
+            return jsonify({'error': 'Invalid or expired referral code'}), 404
+
+        if referral.referred_wallet:
+            return jsonify({'error': 'Referral code already used'}), 400
+
+        referral.referred_wallet = wallet_address
+        referral.status = 'used'
+        db.session.commit()
+
+        return jsonify({
+            'message': 'Referral code applied successfully',
+            'bonus_percentage': float(referral.bonus_percentage)
+        })
+
+    except Exception as e:
+        logger.error(f"Error using referral code: {str(e)}")
+        return jsonify({'error': 'Failed to apply referral code'}), 500
 @app.route('/api/distribution/status/<wallet_address>')
 def get_distribution_status(wallet_address):
     try:
