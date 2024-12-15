@@ -2,35 +2,41 @@ let wallet = null;
 
 async function generateQRCode() {
     try {
-        // Format the connection data according to Figure's specifications
+        // Format the connection data according to Figure's mobile specifications
         const connectionData = {
-            type: "connect",
-            metadata: {
+            type: "wallet-connect",
+            version: "1.0",
+            dapp: {
                 name: "Rovve ISPO",
-                description: "ISPO Delegation Portal",
-                icon: window.location.origin + "/static/img/logo.svg",
-                url: window.location.origin
+                description: "Provenance ISPO Delegation Portal",
+                url: window.location.origin,
+                icon: `${window.location.origin}/static/img/logo.svg`
             },
             network: {
-                name: "provenance-mainnet",
-                chainId: "pio-mainnet-1",
-                nodeUrl: "https://rpc.provenance.io",
-                explorerUrl: "https://explorer.provenance.io"
+                id: "pio-mainnet-1",
+                name: "Provenance Mainnet",
+                rpc: "https://rpc.provenance.io",
+                explorer: "https://explorer.provenance.io"
             },
-            connectionId: Date.now().toString(),
-            origin: window.location.origin
+            session: {
+                id: Date.now().toString(),
+                expiry: Date.now() + (5 * 60 * 1000) // 5 minutes
+            }
         };
         
-        // Generate QR code
+        // Generate QR code with specific format for Figure mobile wallet
         const qrCodeDiv = document.getElementById('qrCode');
-        const qrCodeData = JSON.stringify(connectionData);
+        const qrCodeData = btoa(JSON.stringify(connectionData)); // base64 encode the data
         
         qrCodeDiv.innerHTML = `
             <div class="text-center">
-                <img src="https://api.qrserver.com/v1/create-qr-code/?data=${encodeURIComponent(qrCodeData)}&size=200x200&format=svg&qzone=1" 
-                     alt="Wallet Connection QR Code" 
+                <img src="https://api.qrserver.com/v1/create-qr-code/?data=figure://${encodeURIComponent(qrCodeData)}&size=250x250&format=svg&margin=2" 
+                     alt="Figure Wallet Connection QR Code" 
                      class="img-fluid mb-3">
                 <p class="small text-muted mb-2">Scan with Figure Wallet mobile app</p>
+                <button class="btn btn-sm btn-secondary" onclick="copyQRCode()">
+                    <i class="bi bi-clipboard"></i> Copy Connection Link
+                </button>
             </div>
         `;
         
@@ -165,14 +171,30 @@ async function connectSelectedWallet(walletType) {
             }
         }
 
-        // Update UI and load data
+        // Update UI to show connected state
         document.getElementById('walletAlert').style.display = 'none';
         document.getElementById('delegateForm').style.display = 'block';
+        
+        // Update wallet status display
+        const walletStatus = document.getElementById('walletStatus');
+        const walletAddress = document.getElementById('walletAddress');
+        const connectBtn = document.getElementById('connectWallet');
+        
+        walletStatus.classList.remove('d-none');
+        walletAddress.textContent = `${wallet.address.substring(0, 6)}...${wallet.address.substring(wallet.address.length - 4)}`;
+        
+        connectBtn.querySelector('.connect-text').classList.add('d-none');
+        connectBtn.querySelector('.connected-text').classList.remove('d-none');
+        
         const modal = bootstrap.Modal.getInstance(document.getElementById('walletModal'));
         modal.hide();
 
         // Load delegation data
         await loadDelegationHistory();
+        
+        // Show success toast
+        const toast = new bootstrap.Toast(document.getElementById('walletConnectedToast'));
+        toast.show();
         
     } catch (error) {
         console.error('Error connecting wallet:', error);
