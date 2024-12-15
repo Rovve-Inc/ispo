@@ -75,7 +75,7 @@ def get_delegations(wallet_address):
     try:
         # Query Provenance API for delegations
         validator_address = app.config['VALIDATOR_ADDRESS']
-        api_url = f"{app.config['REST_ENDPOINT']}/staking/delegators/{wallet_address}/delegations"
+        api_url = f"{app.config['REST_ENDPOINT']}/cosmos/staking/v1beta1/delegators/{wallet_address}/delegations"
         
         logger.debug(f"Querying Provenance API: {api_url}")
         response = requests.get(api_url, timeout=10)
@@ -91,15 +91,14 @@ def get_delegations(wallet_address):
         total_delegated = 0
         
         # Process each delegation
-        for delegation in data.get('result', []):
-            if delegation.get('delegation', {}).get('validator_address') == validator_address:
-                amount = float(delegation['delegation'].get('shares', 0)) / 1e6  # Convert from uHash to HASH
-                tx_hash = delegation.get('transaction_hash')
+        for delegation in data.get('delegation_responses', []):
+            if delegation['delegation']['validator_address'] == validator_address:
+                amount = float(delegation['balance']['amount']) / 1e6  # Convert from uHash to HASH
                 
                 delegations.append({
-                    'timestamp': delegation.get('delegation_time', datetime.utcnow().isoformat()),
+                    'timestamp': datetime.utcnow().isoformat(),
                     'amount': amount,
-                    'tx_hash': tx_hash,
+                    'tx_hash': delegation.get('tx_hash'),
                     'status': 'active'
                 })
                 total_delegated += amount
