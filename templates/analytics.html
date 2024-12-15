@@ -1,0 +1,101 @@
+{% extends "base.html" %}
+
+{% block title %}Delegation Analytics{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-md-8 offset-md-2 text-center">
+        <h1 class="display-4 mb-4">Validator Analytics</h1>
+        <p class="lead">Real-time analytics for the Rovve validator</p>
+    </div>
+</div>
+
+<div class="row mb-4">
+    <div class="col-md-3">
+        <div class="card h-100">
+            <div class="card-body text-center">
+                <h5 class="card-title">Validator Rank</h5>
+                <p class="display-4" id="validatorRank">-</p>
+                <p class="text-muted">Among all active validators</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card h-100">
+            <div class="card-body text-center">
+                <h5 class="card-title">Active Delegators</h5>
+                <p class="display-4" id="activeDelegators">-</p>
+                <p class="text-muted">Current participants</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card h-100">
+            <div class="card-body text-center">
+                <h5 class="card-title">Uptime</h5>
+                <p class="display-4"><span id="uptime">-</span>%</p>
+                <p class="text-muted">Last 24 hours</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card h-100">
+            <div class="card-body text-center">
+                <h5 class="card-title">Commission Rate</h5>
+                <p class="display-4"><span id="commission">-</span>%</p>
+                <p class="text-muted">Current rate</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row mb-4">
+    <div class="col-md-12">
+        <div class="card">
+            <div class="card-body">
+                <h5 class="card-title">Total HASH Delegated Over Time</h5>
+                <canvas id="delegationChart" height="300"></canvas>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-6">
+        <div class="card h-100">
+            <div class="card-body">
+                <h5 class="card-title">Validator Performance</h5>
+                <div class="table-responsive">
+                    <table class="table">
+                        <tbody>
+                            <tr>
+                                <td>Blocks Signed</td>
+                                <td id="blocksSigned" class="text-end">-</td>
+                            </tr>
+                            <tr>
+                                <td>Total Stake</td>
+                                <td id="totalStake" class="text-end">-</td>
+                            </tr>
+                            <tr>
+                                <td>Status</td>
+                                <td id="validatorStatus" class="text-end">-</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-6">
+        <div class="card h-100">
+            <div class="card-body">
+                <h5 class="card-title">Delegation Distribution</h5>
+                <canvas id="distributionChart" height="250"></canvas>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="/static/js/analytics.js"></script>
+{% endblock %}

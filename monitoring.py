@@ -17,9 +17,20 @@ class ValidatorMonitor:
                 catching_up = data['result']['sync_info']['catching_up']
                 latest_block_height = int(data['result']['sync_info']['latest_block_height'])
                 
+                # Get active delegator count
+                active_delegators = db.session.query(db.func.count(db.distinct(Delegation.wallet_address)))\
+                    .filter_by(status='active').scalar() or 0
+                
+                # Get validator info
+                validator_info = self.get_validator_info()
+                
                 status = ValidatorStatus(
                     status='healthy' if not catching_up else 'syncing',
-                    last_updated=datetime.utcnow()
+                    last_updated=datetime.utcnow(),
+                    active_delegators=active_delegators,
+                    blocks_signed=validator_info.get('blocks_signed', 0),
+                    commission_rate=validator_info.get('commission_rate', 5.0),
+                    rank=validator_info.get('rank', 0)
                 )
                 db.session.add(status)
                 db.session.commit()

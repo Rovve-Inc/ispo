@@ -28,3 +28,7 @@ class ValidatorStatus(db.Model):
     total_delegated = db.Column(db.Numeric(precision=20, scale=6), default=0)
     uptime = db.Column(db.Float, default=100.0)
     last_updated = db.Column(db.DateTime, default=datetime.utcnow)
+    active_delegators = db.Column(db.Integer, default=0)
+    blocks_signed = db.Column(db.Integer, default=0)
+    commission_rate = db.Column(db.Float, default=5.0)  # 5% default commission
+    rank = db.Column(db.Integer)  # Validator rank by total stake

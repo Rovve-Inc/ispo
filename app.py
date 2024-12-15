@@ -67,6 +67,61 @@ def about():
 def delegations():
     return render_template('delegations.html')
 
+@app.route('/analytics')
+def analytics():
+    return render_template('analytics.html')
+
+@app.route('/api/analytics')
+def get_analytics():
+    try:
+        # Get latest validator status
+        status = ValidatorStatus.query.order_by(ValidatorStatus.id.desc()).first()
+        
+        # Get delegation distribution
+        distribution_query = db.session.query(
+            db.func.sum(db.case(
+                (Delegation.amount < 1000, 1),
+                else_=0
+            )),
+            db.func.sum(db.case(
+                (Delegation.amount.between(1000, 10000), 1),
+                else_=0
+            )),
+            db.func.sum(db.case(
+                (Delegation.amount.between(10000, 100000), 1),
+                else_=0
+            )),
+            db.func.sum(db.case(
+                (Delegation.amount > 100000, 1),
+                else_=0
+            ))
+        ).filter_by(status='active').first()
+        
+        if status:
+            return jsonify({
+                'rank': status.rank,
+                'active_delegators': status.active_delegators,
+                'uptime': float(status.uptime),
+                'commission_rate': float(status.commission_rate),
+                'blocks_signed': status.blocks_signed,
+                'total_delegated': float(status.total_delegated),
+                'status': status.status,
+                'distribution_data': {
+                    'small': distribution_query[0] or 0,
+                    'medium': distribution_query[1] or 0,
+                    'large': distribution_query[2] or 0,
+                    'xlarge': distribution_query[3] or 0
+                }
+            })
+        
+        return jsonify({
+            'error': 'No validator status available'
+        }), 404
+        
+    except Exception as e:
+        logger.error(f"Error getting analytics data: {str(e)}")
+        return jsonify({'error': 'Failed to get analytics data'}), 500
+
 @app.route('/api/validator/stats')
 def get_validator_stats():
     try:
