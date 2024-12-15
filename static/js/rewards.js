@@ -41,22 +41,104 @@ async function connectWallet() {
 
 async function connectSelectedWallet(walletType) {
     try {
-        if (walletType === 'leap' && window.leap) {
-            wallet = await window.leap.connect();
-        } else if (walletType === 'figure' && window.figure) {
-            wallet = await window.figure.connect();
-        } else {
-            throw new Error(`Please install ${walletType === 'leap' ? 'Leap' : 'Figure'} wallet extension`);
+        const chainConfig = {
+            chainId: "pio-mainnet-1",
+            chainName: "Provenance Blockchain",
+            rpc: "https://rpc.provenance.io",
+            rest: "https://api.provenance.io",
+            stakeCurrency: {
+                coinDenom: "HASH",
+                coinMinimalDenom: "nhash",
+                coinDecimals: 9,
+            },
+            bech32Config: {
+                bech32PrefixAccAddr: "pb",
+                bech32PrefixAccPub: "pbpub",
+                bech32PrefixValAddr: "pbvaloper",
+                bech32PrefixValPub: "pbvaloperpub",
+                bech32PrefixConsAddr: "pbvalcons",
+                bech32PrefixConsPub: "pbvalconspub"
+            },
+            currencies: [{
+                coinDenom: "HASH",
+                coinMinimalDenom: "nhash",
+                coinDecimals: 9,
+            }],
+            feeCurrencies: [{
+                coinDenom: "HASH",
+                coinMinimalDenom: "nhash",
+                coinDecimals: 9,
+            }],
+            gasPriceStep: {
+                low: 1900,
+                average: 2000,
+                high: 2200
+            }
+        };
+
+        if (walletType === 'leap') {
+            // Ensure window.leap exists
+            if (!window.leap) {
+                throw new Error('Leap Wallet extension not detected. Please install Leap Wallet extension and refresh the page.');
+            }
+
+            try {
+                // First try to suggest the chain
+                await window.leap.experimentalSuggestChain(chainConfig);
+            } catch (suggestError) {
+                console.warn('Chain suggestion failed:', suggestError);
+                // Continue anyway as the chain might already be configured
+            }
+
+            try {
+                // Enable the wallet
+                await window.leap.enable(chainConfig.chainId);
+                
+                // Get the offlineSigner for this chainId
+                const offlineSigner = await window.leap.getOfflineSigner(chainConfig.chainId);
+                
+                // Get the user's address
+                const accounts = await offlineSigner.getAccounts();
+                if (!accounts || accounts.length === 0) {
+                    throw new Error('No accounts found in Leap wallet');
+                }
+                
+                wallet = {
+                    address: accounts[0].address,
+                    signer: offlineSigner
+                };
+            } catch (error) {
+                throw new Error(`Failed to connect Leap wallet: ${error.message}`);
+            }
+        } else if (walletType === 'figure') {
+            if (!window.figure) {
+                throw new Error('Figure Wallet extension not detected. Please install Figure Wallet extension and refresh the page.');
+            }
+
+            try {
+                // Connect Figure wallet with chain config
+                const figureWallet = await window.figure.connect(chainConfig);
+                if (!figureWallet || !figureWallet.address) {
+                    throw new Error('Failed to connect Figure wallet');
+                }
+                wallet = figureWallet;
+            } catch (error) {
+                throw new Error(`Failed to connect Figure wallet: ${error.message}`);
+            }
         }
 
+        // Update UI and load data
         document.getElementById('walletAlert').style.display = 'none';
         document.getElementById('rewardsContent').style.display = 'block';
         const modal = bootstrap.Modal.getInstance(document.getElementById('walletModal'));
         modal.hide();
-        loadRewardsData();
+        
+        // Load rewards data
+        await loadRewardsData();
+        
     } catch (error) {
         console.error('Error connecting wallet:', error);
-        alert(error.message || 'Failed to connect wallet');
+        alert(error.message || 'Failed to connect wallet. Please ensure you have the correct wallet extension installed.');
     }
 }
 

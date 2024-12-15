@@ -49,49 +49,97 @@ async function connectWallet() {
 async function connectSelectedWallet(walletType) {
     try {
         const chainConfig = {
-            chainId: 'pio-mainnet-1',
-            chainName: 'Provenance',
-            rpc: 'https://rpc.provenance.io',
-            rest: 'https://api.provenance.io',
+            chainId: "pio-mainnet-1",
+            chainName: "Provenance Blockchain",
+            rpc: "https://rpc.provenance.io",
+            rest: "https://api.provenance.io",
+            stakeCurrency: {
+                coinDenom: "HASH",
+                coinMinimalDenom: "nhash",
+                coinDecimals: 9,
+            },
             bech32Config: {
-                bech32PrefixAccAddr: 'pb',
-                bech32PrefixAccPub: 'pbpub',
-                bech32PrefixValAddr: 'pbvaloper',
-                bech32PrefixValPub: 'pbvaloperpub',
-                bech32PrefixConsAddr: 'pbvalcons',
-                bech32PrefixConsPub: 'pbvalconspub'
+                bech32PrefixAccAddr: "pb",
+                bech32PrefixAccPub: "pbpub",
+                bech32PrefixValAddr: "pbvaloper",
+                bech32PrefixValPub: "pbvaloperpub",
+                bech32PrefixConsAddr: "pbvalcons",
+                bech32PrefixConsPub: "pbvalconspub"
+            },
+            currencies: [{
+                coinDenom: "HASH",
+                coinMinimalDenom: "nhash",
+                coinDecimals: 9,
+            }],
+            feeCurrencies: [{
+                coinDenom: "HASH",
+                coinMinimalDenom: "nhash",
+                coinDecimals: 9,
+            }],
+            gasPriceStep: {
+                low: 1900,
+                average: 2000,
+                high: 2200
             }
         };
 
         if (walletType === 'leap') {
-            // Check if Leap wallet is actually installed
-            if (typeof window.leap === 'undefined') {
-                throw new Error('Leap wallet extension is not installed. Please install it from the Chrome Web Store.');
+            // Ensure window.leap exists
+            if (!window.leap) {
+                throw new Error('Leap Wallet extension not detected. Please install Leap Wallet extension and refresh the page.');
             }
-            
-            // Enable and connect Leap wallet with Provenance network config
-            wallet = await window.leap.enable(chainConfig);
+
+            try {
+                // First try to suggest the chain
+                await window.leap.experimentalSuggestChain(chainConfig);
+            } catch (suggestError) {
+                console.warn('Chain suggestion failed:', suggestError);
+                // Continue anyway as the chain might already be configured
+            }
+
+            try {
+                // Enable the wallet
+                await window.leap.enable(chainConfig.chainId);
+                
+                // Get the offlineSigner for this chainId
+                const offlineSigner = await window.leap.getOfflineSigner(chainConfig.chainId);
+                
+                // Get the user's address
+                const accounts = await offlineSigner.getAccounts();
+                if (!accounts || accounts.length === 0) {
+                    throw new Error('No accounts found in Leap wallet');
+                }
+                
+                wallet = {
+                    address: accounts[0].address,
+                    signer: offlineSigner
+                };
+            } catch (error) {
+                throw new Error(`Failed to connect Leap wallet: ${error.message}`);
+            }
         } else if (walletType === 'figure') {
-            // Check if Figure wallet extension is present
-            if (typeof window.figure === 'undefined') {
-                throw new Error('Figure wallet extension is not installed. Please install it from the Chrome Web Store.');
+            if (!window.figure) {
+                throw new Error('Figure Wallet extension not detected. Please install Figure Wallet extension and refresh the page.');
             }
-            
-            // Connect Figure wallet
-            wallet = await window.figure.connect(chainConfig);
+
+            try {
+                // Connect Figure wallet with chain config
+                const figureWallet = await window.figure.connect(chainConfig);
+                if (!figureWallet || !figureWallet.address) {
+                    throw new Error('Failed to connect Figure wallet');
+                }
+                wallet = figureWallet;
+            } catch (error) {
+                throw new Error(`Failed to connect Figure wallet: ${error.message}`);
+            }
         }
 
-        // Verify connection
-        if (!wallet || !wallet.address) {
-            throw new Error('Failed to connect wallet. Please try again.');
-        }
-
-        // Update UI
+        // Update UI and load data
         document.getElementById('walletAlert').style.display = 'none';
         document.getElementById('delegateForm').style.display = 'block';
         const modal = bootstrap.Modal.getInstance(document.getElementById('walletModal'));
         modal.hide();
-        
+
         // Load delegation data
         await loadDelegationHistory();
         
