@@ -1,23 +1,31 @@
 let wallet = null;
 
 async function generateQRCode() {
-    // Generate a random connection ID or use wallet-specific data
-    const connectionData = {
-        action: "connect",
-        timestamp: Date.now(),
-        dapp: "Rovve ISPO"
-    };
-    
-    // In a real implementation, this would be your actual connection data
-    const qrData = JSON.stringify(connectionData);
-    
-    // For now, we'll use a placeholder QR code image
-    const qrCodeDiv = document.getElementById('qrCode');
-    qrCodeDiv.innerHTML = `
-        <img src="https://api.qrserver.com/v1/create-qr-code/?data=${encodeURIComponent(qrData)}&size=200x200" 
-             alt="Wallet Connection QR Code" 
-             class="img-fluid">
-    `;
+    try {
+        // Format the connection data according to Figure's specifications
+        const connectionData = {
+            dapp: "Rovve ISPO",
+            network: "provenance-mainnet",
+            version: "1.0.0",
+            chainId: "pio-mainnet-1",
+            callback: window.location.origin + "/wallet/callback"
+        };
+        
+        // Use Figure's QR code format
+        const qrData = btoa(JSON.stringify(connectionData));
+        
+        // Generate QR code
+        const qrCodeDiv = document.getElementById('qrCode');
+        qrCodeDiv.innerHTML = `
+            <img src="https://api.qrserver.com/v1/create-qr-code/?data=${encodeURIComponent(qrData)}&size=200x200" 
+                 alt="Wallet Connection QR Code" 
+                 class="img-fluid">
+        `;
+        return qrData;
+    } catch (error) {
+        console.error('Error generating QR code:', error);
+        throw error;
+    }
 }
 
 function copyQRCode() {
@@ -40,22 +48,56 @@ async function connectWallet() {
 
 async function connectSelectedWallet(walletType) {
     try {
-        if (walletType === 'leap' && window.leap) {
-            wallet = await window.leap.connect();
-        } else if (walletType === 'figure' && window.figure) {
-            wallet = await window.figure.connect();
-        } else {
-            throw new Error(`Please install ${walletType === 'leap' ? 'Leap' : 'Figure'} wallet extension`);
+        const chainConfig = {
+            chainId: 'pio-mainnet-1',
+            chainName: 'Provenance',
+            rpc: 'https://rpc.provenance.io',
+            rest: 'https://api.provenance.io',
+            bech32Config: {
+                bech32PrefixAccAddr: 'pb',
+                bech32PrefixAccPub: 'pbpub',
+                bech32PrefixValAddr: 'pbvaloper',
+                bech32PrefixValPub: 'pbvaloperpub',
+                bech32PrefixConsAddr: 'pbvalcons',
+                bech32PrefixConsPub: 'pbvalconspub'
+            }
+        };
+
+        if (walletType === 'leap') {
+            // Check if Leap wallet is actually installed
+            if (typeof window.leap === 'undefined') {
+                throw new Error('Leap wallet extension is not installed. Please install it from the Chrome Web Store.');
+            }
+            
+            // Enable and connect Leap wallet with Provenance network config
+            wallet = await window.leap.enable(chainConfig);
+        } else if (walletType === 'figure') {
+            // Check if Figure wallet extension is present
+            if (typeof window.figure === 'undefined') {
+                throw new Error('Figure wallet extension is not installed. Please install it from the Chrome Web Store.');
+            }
+            
+            // Connect Figure wallet
+            wallet = await window.figure.connect(chainConfig);
         }
 
+        // Verify connection
+        if (!wallet || !wallet.address) {
+            throw new Error('Failed to connect wallet. Please try again.');
+        }
+
+        // Update UI
         document.getElementById('walletAlert').style.display = 'none';
         document.getElementById('delegateForm').style.display = 'block';
         const modal = bootstrap.Modal.getInstance(document.getElementById('walletModal'));
         modal.hide();
-        loadDelegationHistory();
+        
+        // Load delegation data
+        await loadDelegationHistory();
+        
     } catch (error) {
         console.error('Error connecting wallet:', error);
-        alert(error.message || 'Failed to connect wallet');
+        alert(error.message || 'Failed to connect wallet. Please ensure you have the correct wallet extension installed.');
     }
 }
 
