@@ -72,16 +72,22 @@ async function handleWalletSubmit(event) {
                 data.delegationHistory.forEach(delegation => {
                     const row = tbody.insertRow();
                     const delegationDate = new Date(delegation.timestamp);
+                    console.log("Delegation data:", delegation); // Debug log
                     const formattedDate = delegationDate.toLocaleDateString('en-US', {
                         month: 'short',
                         day: 'numeric',
                         year: 'numeric'
                     });
+                    
+                    // Format amount with proper decimal handling
+                    const amount = parseFloat(delegation.amount);
+                    const formattedAmount = isNaN(amount) ? 0 : amount;
+                    
                     row.innerHTML = `
                         <td>${formattedDate}</td>
-                        <td>${Number(delegation.amount).toLocaleString()} HASH</td>
+                        <td>${formattedAmount.toLocaleString()} HASH</td>
                         <td>
-                            <span class="badge bg-info">Initial Delegation</span>
+                            <span class="badge bg-info">Active Delegation</span>
                         </td>
                     `;
                 });

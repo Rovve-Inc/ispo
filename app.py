@@ -102,10 +102,18 @@ def get_delegations(wallet_address):
         logger.info(f"Fetching delegations for wallet: {wallet_address}")
         
         # Query delegations from database
-        delegations = Delegation.query.filter_by(
+        # Clear query to ensure fresh data
+        db.session.remove()
+        
+        # Query with explicit columns
+        delegations = db.session.query(
+            Delegation
+        ).filter_by(
             wallet_address=wallet_address,
             status='active'
         ).order_by(Delegation.timestamp.desc()).all()
+        
+        logger.info(f"Raw delegation data: {[(d.amount, d.timestamp) for d in delegations]}")
         
         logger.info(f"Found {len(delegations)} delegations")
         
