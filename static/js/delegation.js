@@ -42,20 +42,49 @@ async function handleWalletSubmit(event) {
     }
     
     showLoading(true);
-    document.getElementById('rewardsContent').classList.add('d-none');
+    const rewardsContent = document.getElementById('rewardsContent');
+    if (rewardsContent) {
+        rewardsContent.classList.add('d-none');
+    }
         
     try {
         const response = await fetch(`/api/delegations/${walletAddress}`);
+        const data = await response.json();
+        
         if (!response.ok) {
-            throw new Error('Failed to fetch delegation data');
+            throw new Error(data.error || 'Failed to fetch delegation data');
         }
         
-        const data = await response.json();
-        document.getElementById('rewardsContent').classList.remove('d-none');
-        updateDelegationSummary(data);
-        updateDelegationHistory(data);
+        if (rewardsContent) {
+            rewardsContent.classList.remove('d-none');
+        }
+        
+        // Always show the table even if there's no data
+        const tbody = document.getElementById('rewardHistory');
+        if (tbody) {
+            tbody.innerHTML = '';
+            
+            if (!data.delegationHistory || data.delegationHistory.length === 0) {
+                const row = tbody.insertRow();
+                row.innerHTML = '<td colspan="3" class="text-center">No delegation history found for this address</td>';
+            } else {
+                data.delegationHistory.forEach(delegation => {
+                    const row = tbody.insertRow();
+                    row.innerHTML = `
+                        <td>${new Date(delegation.timestamp).toLocaleDateString()}</td>
+                        <td>${Number(delegation.amount).toLocaleString()} HASH</td>
+                        <td>${delegation.tx_hash ? 
+                            `<a href="https://explorer.provenance.io/tx/${delegation.tx_hash}" 
+                                target="_blank" class="btn btn-sm btn-outline-primary">
+                                View Transaction
+                            </a>` : 'N/A'}</td>
+                    `;
+                });
+            }
+        }
     } catch (error) {
-        showError('Failed to fetch delegation data. Please try again later.');
+        console.error('Error:', error);
+        showError(error.message || 'Failed to fetch delegation data. Please try again later.');
     } finally {
         showLoading(false);
     }
