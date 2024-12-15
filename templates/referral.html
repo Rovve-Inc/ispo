@@ -32,15 +32,17 @@
                                     <button type="submit" class="btn btn-primary">Generate Code</button>
                                 </form>
                                 <div id="referralCodeDisplay" class="d-none mt-3">
-                                    <div class="alert alert-success">
-                                        <h6>Your Referral Code:</h6>
-                                        <div class="input-group">
-                                            <input type="text" class="form-control" id="referralCode" readonly>
-                                            <button class="btn btn-outline-secondary" type="button" onclick="copyReferralCode()">
-                                                <span>Copy</span>
-                                            </button>
+                                    <div class="card bg-light">
+                                        <div class="card-body">
+                                            <h6 class="card-title mb-3">Your Referral Code:</h6>
+                                            <div class="input-group mb-2">
+                                                <input type="text" class="form-control form-control-lg" id="referralCode" readonly>
+                                                <button class="btn btn-outline-primary" type="button" onclick="copyReferralCode()">
+                                                    Copy Code
+                                                </button>
+                                            </div>
+                                            <small class="text-muted">Share this code with others to earn 5% bonus RV tokens</small>
                                         </div>
-                                        <small class="text-muted mt-2 d-block">Share this code with others to earn bonus RV tokens</small>
                                     </div>
                                 </div>
                             </div>
