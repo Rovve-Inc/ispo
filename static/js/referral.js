@@ -15,8 +15,8 @@ document.addEventListener('DOMContentLoaded', function() {
             const walletAddress = document.getElementById('walletAddress').value.trim();
             
             // Validate wallet address format
-            if (!/^pb[a-zA-Z0-9]{39}$/.test(walletAddress)) {
-                showError('Invalid wallet address format', generateForm);
+            if (!/^pb1[a-zA-Z0-9]{38}$/.test(walletAddress)) {
+                showError('Please enter a valid Provenance wallet address starting with "pb1"', generateForm);
                 return;
             }
             
@@ -68,8 +68,8 @@ document.addEventListener('DOMContentLoaded', function() {
             const referralCode = document.getElementById('referralCodeInput').value.trim();
             
             // Validate wallet address format
-            if (!/^pb[a-zA-Z0-9]{39}$/.test(walletAddress)) {
-                showError('Invalid wallet address format', useForm);
+            if (!/^pb1[a-zA-Z0-9]{38}$/.test(walletAddress)) {
+                showError('Please enter a valid Provenance wallet address starting with "pb1"', useForm);
                 return;
             }
             
