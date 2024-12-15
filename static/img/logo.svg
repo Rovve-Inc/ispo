@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="120" height="40" viewBox="0 0 120 40">
+  <style>
+    .text { fill: #ffffff; font-family: Arial, sans-serif; font-size: 24px; }
+    .icon { fill: #00ff00; }
+  </style>
+  <circle class="icon" cx="20" cy="20" r="15"/>
+  <text class="text" x="45" y="28">Rovve</text>
+</svg>

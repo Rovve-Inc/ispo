@@ -1,0 +1,85 @@
+{% extends "base.html" %}
+
+{% block title %}Home{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-md-8 offset-md-2 text-center">
+        <h1 class="display-4 mb-4">Rovve ISPO</h1>
+        <p class="lead">Participate in the Initial Stake Pool Offering to earn RV tokens</p>
+    </div>
+</div>
+
+<div class="row mb-4">
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-body">
+                <h5 class="card-title">Total Staked</h5>
+                <p class="card-text display-6" id="totalStaked">Loading...</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-body">
+                <h5 class="card-title">Participants</h5>
+                <p class="card-text display-6" id="totalParticipants">Loading...</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-body">
+                <h5 class="card-title">Days Remaining</h5>
+                <p class="card-text display-6" id="daysRemaining">Loading...</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row mb-4">
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-body">
+                <h5 class="card-title">ISPO Timeline</h5>
+                <div class="progress mb-3">
+                    <div class="progress-bar" role="progressbar" id="ispoProgress"></div>
+                </div>
+                <p class="text-muted">
+                    Start: March 1, 2024<br>
+                    End: September 1, 2024
+                </p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-body">
+                <h5 class="card-title">Reward Structure</h5>
+                <canvas id="rewardChart"></canvas>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-8 offset-md-2">
+        <div class="card">
+            <div class="card-body">
+                <h5 class="card-title">How It Works</h5>
+                <ol class="list-group list-group-numbered">
+                    <li class="list-group-item">Connect your Provenance wallet</li>
+                    <li class="list-group-item">Delegate HASH tokens to our validator</li>
+                    <li class="list-group-item">Earn RV tokens based on delegation amount and duration</li>
+                    <li class="list-group-item">Receive early participation bonuses</li>
+                </ol>
+                <div class="text-center mt-4">
+                    <a href="/delegate" class="btn btn-primary btn-lg">Start Delegating</a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="/static/js/rewards.js"></script>
+{% endblock %}

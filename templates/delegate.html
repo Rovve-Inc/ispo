@@ -1,0 +1,82 @@
+{% extends "base.html" %}
+
+{% block title %}Delegate{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-md-8 offset-md-2">
+        <div class="card">
+            <div class="card-body">
+                <h2 class="card-title text-center mb-4">Delegate HASH Tokens</h2>
+                
+                <div id="walletAlert" class="alert alert-warning" role="alert">
+                    Please connect your wallet to delegate tokens.
+                </div>
+                
+                <form id="delegateForm" class="needs-validation" novalidate style="display: none;">
+                    <div class="mb-3">
+                        <label for="delegationAmount" class="form-label">Amount to Delegate (HASH)</label>
+                        <input type="number" class="form-control" id="delegationAmount" required min="100">
+                        <div class="form-text">Minimum delegation: 100 HASH</div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label class="form-label">Estimated Rewards</label>
+                        <div class="card bg-light">
+                            <div class="card-body">
+                                <div class="row">
+                                    <div class="col-6">
+                                        <p class="mb-1">RV Tokens:</p>
+                                        <h4 id="estimatedRvTokens">0 RV</h4>
+                                    </div>
+                                    <div class="col-6">
+                                        <p class="mb-1">Early Bonus:</p>
+                                        <h4 id="earlyBonus">0%</h4>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="termsCheck" required>
+                            <label class="form-check-label" for="termsCheck">
+                                I understand that delegated tokens will be locked for the ISPO duration
+                            </label>
+                        </div>
+                    </div>
+                    
+                    <button type="submit" class="btn btn-primary w-100" id="delegateButton">Delegate Tokens</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-8 offset-md-2">
+        <div class="card">
+            <div class="card-body">
+                <h5 class="card-title">Delegation History</h5>
+                <div class="table-responsive">
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th>Date</th>
+                                <th>Amount</th>
+                                <th>Status</th>
+                                <th>Transaction</th>
+                            </tr>
+                        </thead>
+                        <tbody id="delegationHistory">
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="/static/js/delegation.js"></script>
+{% endblock %}
