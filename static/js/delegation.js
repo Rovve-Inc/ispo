@@ -4,40 +4,44 @@ async function generateQRCode() {
     try {
         // Format the connection data according to Figure's specifications
         const connectionData = {
-            type: "wallet_connect",
-            style: "figure",
-            dapp: {
+            type: "connect",
+            metadata: {
                 name: "Rovve ISPO",
-                icon: window.location.origin + "/static/img/logo.svg"
+                description: "ISPO Delegation Portal",
+                icon: window.location.origin + "/static/img/logo.svg",
+                url: window.location.origin
             },
             network: {
+                name: "provenance-mainnet",
                 chainId: "pio-mainnet-1",
-                name: "Provenance Mainnet",
-                rpc: "https://rpc.provenance.io",
-                rest: "https://api.provenance.io"
+                nodeUrl: "https://rpc.provenance.io",
+                explorerUrl: "https://explorer.provenance.io"
             },
-            callback: {
-                success: window.location.origin + "/wallet/connect/success",
-                error: window.location.origin + "/wallet/connect/error"
-            }
+            connectionId: Date.now().toString(),
+            origin: window.location.origin
         };
         
-        // Use Figure's QR code format with specific styling
-        const qrData = btoa(JSON.stringify(connectionData));
-        
-        // Generate QR code with Figure's styling
+        // Generate QR code
         const qrCodeDiv = document.getElementById('qrCode');
+        const qrCodeData = JSON.stringify(connectionData);
+        
         qrCodeDiv.innerHTML = `
-            <img src="https://api.qrserver.com/v1/create-qr-code/?data=${encodeURIComponent(qrData)}&size=200x200&bgcolor=1a1b1e&color=ffffff&margin=2" 
-                 alt="Wallet Connection QR Code" 
-                 class="img-fluid">
+            <div class="text-center">
+                <img src="https://api.qrserver.com/v1/create-qr-code/?data=${encodeURIComponent(qrCodeData)}&size=200x200&format=svg&qzone=1" 
+                     alt="Wallet Connection QR Code" 
+                     class="img-fluid mb-3">
+                <p class="small text-muted mb-2">Scan with Figure Wallet mobile app</p>
+            </div>
         `;
-        return qrData;
+        
+        return qrCodeData;
     } catch (error) {
         console.error('Error generating QR code:', error);
+        const qrCodeDiv = document.getElementById('qrCode');
         qrCodeDiv.innerHTML = `
             <div class="alert alert-danger">
-                Failed to generate QR code. Please try again or use desktop wallet.
+                <p class="mb-0">Failed to generate QR code. Please try again or use desktop wallet.</p>
+                <small class="d-block mt-2">${error.message}</small>
             </div>
         `;
         throw error;
@@ -64,21 +68,13 @@ async function connectWallet() {
 
 async function connectSelectedWallet(walletType) {
     try {
+        // Basic chain configuration that works with both wallets
         const chainConfig = {
             chainId: "pio-mainnet-1",
-            chainName: "Provenance Blockchain",
+            chainName: "Provenance",
             rpc: "https://rpc.provenance.io",
             rest: "https://api.provenance.io",
-            stakeCurrency: {
-                coinDenom: "HASH",
-                coinMinimalDenom: "nhash",
-                coinDecimals: 9,
-                coinGeckoId: "provenance-blockchain"
-            },
-            walletUrlForStaking: "https://explorer.provenance.io/validators",
-            bip44: {
-                coinType: 505
-            },
+            bip44: { coinType: 505 },
             bech32Config: {
                 bech32PrefixAccAddr: "pb",
                 bech32PrefixAccPub: "pbpub",
@@ -90,56 +86,67 @@ async function connectSelectedWallet(walletType) {
             currencies: [{
                 coinDenom: "HASH",
                 coinMinimalDenom: "nhash",
-                coinDecimals: 9,
-                coinGeckoId: "provenance-blockchain"
+                coinDecimals: 9
             }],
             feeCurrencies: [{
                 coinDenom: "HASH",
                 coinMinimalDenom: "nhash",
                 coinDecimals: 9,
-                coinGeckoId: "provenance-blockchain",
                 gasPriceStep: {
                     low: 1900,
                     average: 2000,
                     high: 2200
                 }
             }],
-            features: ["ibc-transfer", "ibc-go", "cosmwasm"]
+            stakeCurrency: {
+                coinDenom: "HASH",
+                coinMinimalDenom: "nhash",
+                coinDecimals: 9
+            }
         };
 
         if (walletType === 'leap') {
-            // Ensure window.leap exists
-            if (!window.leap) {
-                throw new Error('Leap Wallet extension not detected. Please install Leap Wallet extension and refresh the page.');
+            if (typeof window.leap === 'undefined') {
+                throw new Error('Leap Wallet extension not detected. Please install Leap Wallet and refresh the page.');
             }
 
             try {
-                // First try to suggest the chain
-                await window.leap.experimentalSuggestChain(chainConfig);
-            } catch (suggestError) {
-                console.warn('Chain suggestion failed:', suggestError);
-                // Continue anyway as the chain might already be configured
-            }
-
-            try {
-                // Enable the wallet
-                await window.leap.enable(chainConfig.chainId);
+                // Try enabling the wallet first
+                const chainId = chainConfig.chainId;
+                await window.leap.enable(chainId);
                 
-                // Get the offlineSigner for this chainId
-                const offlineSigner = await window.leap.getOfflineSigner(chainConfig.chainId);
-                
-                // Get the user's address
-                const accounts = await offlineSigner.getAccounts();
-                if (!accounts || accounts.length === 0) {
-                    throw new Error('No accounts found in Leap wallet');
+                // Get the wallet client
+                const client = window.leap;
+                if (!client) {
+                    throw new Error('Failed to initialize Leap wallet client');
                 }
+
+                // Get account information
+                const offlineSigner = window.leap.getOfflineSigner(chainId);
+                const accounts = await offlineSigner.getAccounts();
                 
+                if (!accounts || accounts.length === 0) {
+                    throw new Error('No accounts found in Leap wallet. Please create or import an account.');
+                }
+
+                // Store wallet information
                 wallet = {
                     address: accounts[0].address,
-                    signer: offlineSigner
+                    signer: offlineSigner,
+                    client: client
                 };
+
+                console.log('Successfully connected to Leap wallet:', {
+                    address: wallet.address,
+                    chainId: chainId
+                });
             } catch (error) {
-                throw new Error(`Failed to connect Leap wallet: ${error.message}`);
+                console.error('Detailed Leap wallet connection error:', error);
+                throw new Error(
+                    error.message.includes('not detected') 
+                        ? 'Please install Leap wallet extension'
+                        : `Leap wallet connection failed: ${error.message}`
+                );
             }
         } else if (walletType === 'figure') {
             if (!window.figure) {
