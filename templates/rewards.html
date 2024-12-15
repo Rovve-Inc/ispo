@@ -1,69 +1,147 @@
 {% extends "base.html" %}
 
-{% block title %}Check Your HASH Delegation{% endblock %}
+{% block title %}ISPO Rewards{% endblock %}
 
 {% block content %}
 <div class="row mb-4">
-    <div class="col-md-8 offset-md-2">
-        <div class="card">
+    <div class="col-md-10 offset-md-1">
+        <div class="card mb-4">
             <div class="card-body">
-                <h2 class="card-title text-center mb-4">Check Your HASH Delegation</h2>
+                <h2 class="card-title text-center mb-4">Multi-Tier Reward Structure</h2>
                 
-                <div class="alert alert-info mb-4">
-                    <h5 class="alert-heading">How to Participate</h5>
-                    <p class="mb-0">
-                        1. Visit the <a href="https://explorer.provenance.io/validators" target="_blank" class="alert-link">Provenance Explorer</a><br>
-                        2. Find and delegate to the Rovve validator<br>
-                        3. Come back here to track your delegation amount
-                    </p>
+                <div class="row mb-4">
+                    <div class="col-md-6">
+                        <div class="card bg-light h-100">
+                            <div class="card-body">
+                                <h5 class="card-title">ISPO Allocation Distribution</h5>
+                                <div style="height: 300px;">
+                                    <canvas id="rewardTiersChart"></canvas>
+                                </div>
+                                <div class="mt-3">
+                                    <ul class="list-unstyled">
+                                        <li><span class="badge bg-success">■</span> First 3 Months: 60% of allocation</li>
+                                        <li><span class="badge bg-info">■</span> Remaining Period: 40% of allocation</li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="card bg-light h-100">
+                            <div class="card-body">
+                                <h5 class="card-title">Bonus Rate Timeline</h5>
+                                <div style="height: 300px;">
+                                    <canvas id="bonusTiersChart"></canvas>
+                                </div>
+                                <div class="mt-3 text-muted">
+                                    <small>* Bonus rates are added to base rewards</small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
                 </div>
 
-                <form id="walletForm" class="mb-4">
-                    <div class="input-group">
-                        <input type="text" class="form-control form-control-lg" id="walletAddress" 
-                               placeholder="Enter your Provenance wallet address (pb...)" 
-                               pattern="^pb[a-zA-Z0-9]{39}$"
-                               required>
-                        <button class="btn btn-primary btn-lg" type="submit">Check Delegation</button>
+                <div class="card bg-light mb-4">
+                    <div class="card-body">
+                        <h5 class="card-title mb-3">Reward Tiers Breakdown</h5>
+                        <div class="table-responsive">
+                            <table class="table">
+                                <thead>
+                                    <tr>
+                                        <th>Time Period</th>
+                                        <th>Base Rate</th>
+                                        <th>Bonus Rate</th>
+                                        <th>Total APR</th>
+                                        <th>Allocation %</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td>First 3 Months</td>
+                                        <td>10%</td>
+                                        <td>+20%</td>
+                                        <td>30%</td>
+                                        <td>60%</td>
+                                    </tr>
+                                    <tr>
+                                        <td>Months 4-6</td>
+                                        <td>10%</td>
+                                        <td>+10%</td>
+                                        <td>20%</td>
+                                        <td>30%</td>
+                                    </tr>
+                                    <tr>
+                                        <td>Remaining Period</td>
+                                        <td>10%</td>
+                                        <td>+5%</td>
+                                        <td>15%</td>
+                                        <td>10%</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
                     </div>
-                    <div class="form-text">Example: pb1... (44 characters)</div>
-                </form>
-                
-                <div id="rewardsContent" class="d-none">
-                    <div class="row mb-4">
-                        <div class="col-md-6">
-                            <div class="card bg-light">
-                                <div class="card-body text-center">
-                                    <h5 class="card-title">Total HASH Delegated</h5>
-                                    <h3 id="totalDelegated" class="mb-0">0 HASH</h3>
+                </div>
+
+                <div class="card">
+                    <div class="card-body">
+                        <h5 class="card-title mb-3">Check Your Rewards</h5>
+                        <form id="walletForm" class="mb-4">
+                            <div class="input-group">
+                                <input type="text" class="form-control form-control-lg" id="walletAddress" 
+                                       placeholder="Enter your Provenance wallet address (pb...)" 
+                                       pattern="^pb[a-zA-Z0-9]{39}$"
+                                       required>
+                                <button class="btn btn-primary btn-lg" type="submit">Calculate Rewards</button>
+                            </div>
+                            <div class="form-text">Example: pb1... (44 characters)</div>
+                        </form>
+                        
+                        <div id="rewardsContent" class="d-none">
+                            <div class="row mb-4">
+                                <div class="col-md-4">
+                                    <div class="card bg-light">
+                                        <div class="card-body text-center">
+                                            <h5 class="card-title">Total HASH Delegated</h5>
+                                            <h3 id="totalDelegated" class="mb-0">0 HASH</h3>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <div class="card bg-light">
+                                        <div class="card-body text-center">
+                                            <h5 class="card-title">Estimated RV Tokens</h5>
+                                            <h3 id="estimatedRewards" class="mb-0">0 RV</h3>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <div class="card bg-light">
+                                        <div class="card-body text-center">
+                                            <h5 class="card-title">Current Bonus Tier</h5>
+                                            <h3 id="currentBonus" class="mb-0">+0%</h3>
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
-                        </div>
-                        <div class="col-md-6">
-                            <div class="card bg-light">
-                                <div class="card-body text-center">
-                                    <h5 class="card-title">Latest Delegation</h5>
-                                    <h3 id="latestDelegation" class="mb-0">0 HASH</h3>
+                            
+                            <div class="card">
+                                <div class="card-body">
+                                    <h5 class="card-title">Delegation History</h5>
+                                    <div class="table-responsive">
+                                        <table class="table">
+                                            <thead>
+                                                <tr>
+                                                    <th>Date</th>
+                                                    <th>Amount</th>
+                                                    <th>Transaction</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody id="rewardHistory">
+                                            </tbody>
+                                        </table>
+                                    </div>
                                 </div>
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <div class="card">
-                        <div class="card-body">
-                            <h5 class="card-title">Delegation History</h5>
-                            <div class="table-responsive">
-                                <table class="table">
-                                    <thead>
-                                        <tr>
-                                            <th>Date</th>
-                                            <th>Amount</th>
-                                            <th>Transaction</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody id="rewardHistory">
-                                    </tbody>
-                                </table>
                             </div>
                         </div>
                     </div>
@@ -73,5 +151,7 @@
     </div>
 </div>
 
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="/static/js/reward-tiers.js"></script>
 <script src="/static/js/rewards.js"></script>
 {% endblock %}
