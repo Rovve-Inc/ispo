@@ -217,11 +217,20 @@ def generate_referral():
 def use_referral(referral_code):
     try:
         wallet_address = request.json.get('wallet_address')
+        logger.debug(f"Received wallet address: {wallet_address}")
+        
         if not wallet_address:
+            logger.error("No wallet address provided")
             return jsonify({'error': 'Wallet address is required'}), 400
 
-        # Validate wallet address format
-        if not wallet_address.startswith('pb') or len(wallet_address) != 42:
+        # Detailed validation logging
+        has_prefix = wallet_address.startswith('pb1')
+        rest_is_alphanumeric = wallet_address[3:].isalnum() if len(wallet_address) > 3 else False
+        
+        logger.debug(f"Validation details: prefix={has_prefix}, alphanumeric={rest_is_alphanumeric}, length={len(wallet_address)}")
+        
+        if not has_prefix or not rest_is_alphanumeric:
+            logger.error(f"Invalid wallet format: prefix={has_prefix}, alphanumeric={rest_is_alphanumeric}")
             return jsonify({'error': 'Invalid wallet address format'}), 400
 
         # Check if referral code exists and is active

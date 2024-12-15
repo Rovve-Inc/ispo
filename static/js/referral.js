@@ -14,8 +14,16 @@ document.addEventListener('DOMContentLoaded', function() {
         input.classList.remove('is-invalid');
         
         // Basic validation - just check for pb1 prefix and alphanumeric characters
-        const isValid = address.startsWith('pb1') && /^[a-zA-Z0-9]+$/.test(address.slice(3));
-        console.log('Address validation result:', isValid);
+        const hasPrefix = address.startsWith('pb1');
+        const restIsAlphanumeric = /^[a-zA-Z0-9]+$/.test(address.slice(3));
+        console.log('Validation details:', {
+            address,
+            hasPrefix,
+            restIsAlphanumeric,
+            addressLength: address.length
+        });
+        const isValid = hasPrefix && restIsAlphanumeric;
+        console.log('Final validation result:', isValid);
         
         if (!isValid) {
             showError('Please enter a valid Provenance wallet address starting with pb1', formElement);
