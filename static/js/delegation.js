@@ -1,9 +1,35 @@
-let wallet = null;
+// Initialize page elements
+document.addEventListener('DOMContentLoaded', function() {
+    // Load validator stats
+    fetchValidatorStats();
+    
+    // Add event listener to wallet form if it exists
+    const walletForm = document.getElementById('walletForm');
+    if (walletForm) {
+        walletForm.addEventListener('submit', handleWalletSubmit);
+    }
+});
 
-async function generateQRCode() {
+async function fetchValidatorStats() {
     try {
-        // Generate a unique session ID
-        const sessionId = Date.now().toString(36) + Math.random().toString(36).substr(2);
+        const response = await fetch('/api/validator/stats');
+        if (!response.ok) {
+            throw new Error('Failed to fetch validator stats');
+        }
+        const data = await response.json();
+        
+        // Update stats display
+        document.getElementById('totalStaked').textContent = `${Number(data.total_delegated).toLocaleString()} HASH`;
+        document.getElementById('totalParticipants').textContent = data.total_participants;
+        document.getElementById('daysRemaining').textContent = data.days_remaining;
+    } catch (error) {
+        console.error('Error fetching validator stats:', error);
+    }
+}
+
+async function handleWalletSubmit(event) {
+    event.preventDefault();
+    const walletAddress = document.getElementById('walletAddress').value.trim();
         
         // Format connection data according to Figure wallet specifications
         const connectionData = {
