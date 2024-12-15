@@ -46,12 +46,31 @@ def create_app():
 
     @app.route('/api/rewards/<wallet_address>')
     def get_rewards(wallet_address):
-        rewards = Rewards.query.filter_by(wallet_address=wallet_address).all()
-        return jsonify([{
-            'amount': r.amount,
-            'timestamp': r.timestamp,
-            'type': r.reward_type
-        } for r in rewards])
+        # Get delegations and calculated RV token rewards
+        delegations = Delegation.query.filter_by(wallet_address=wallet_address).all()
+        distributions = TokenDistribution.query.filter_by(wallet_address=wallet_address).all()
+        
+        total_rv_tokens = sum(float(d.rv_tokens) for d in distributions)
+        early_bonus = max((float(d.early_bonus) for d in distributions), default=0)
+        
+        return jsonify({
+            'delegations': [{
+                'amount': float(d.amount),
+                'timestamp': d.timestamp.isoformat(),
+                'status': d.status
+            } for d in delegations],
+            'rewards': {
+                'total_rv_tokens': total_rv_tokens,
+                'early_bonus_percentage': early_bonus,
+                'distribution_date': Config.ISPO_END_DATE,
+                'distributions': [{
+                    'rv_tokens': float(d.rv_tokens),
+                    'early_bonus': float(d.early_bonus),
+                    'status': d.status,
+                    'created_at': d.created_at.isoformat()
+                } for d in distributions]
+            }
+        })
 
     return app
 
