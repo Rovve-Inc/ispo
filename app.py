@@ -27,6 +27,30 @@ app.config["SQLALCHEMY_ENGINE_OPTIONS"] = {
 # Initialize the database
 db.init_app(app)
 
+# Ensure database and tables are created
+with app.app_context():
+    try:
+        db.create_all()
+        logger.info("Database tables created successfully")
+        
+        # Check if we need to add test delegation
+        from models import Delegation
+        test_wallet = "pb1ydvlhwryqxf7ufzpxsu7lmvuut9y8sw2pwd0q4"
+        existing_delegation = Delegation.query.filter_by(wallet_address=test_wallet).first()
+        
+        if not existing_delegation:
+            test_delegation = Delegation(
+                wallet_address=test_wallet,
+                amount=500,  # 500 HASH
+                timestamp=datetime(2024, 12, 14),  # December 14, 2024
+                status='active'
+            )
+            db.session.add(test_delegation)
+            db.session.commit()
+            logger.info(f"Added test delegation for wallet {test_wallet}")
+    except Exception as e:
+        logger.error(f"Error initializing database: {str(e)}")
+
 @app.route('/')
 def index():
     return render_template('index.html')
@@ -97,24 +121,9 @@ def get_delegations(wallet_address):
             logger.debug(f"Delegation data: {delegation_data}")
             delegation_history.append(delegation_data)
         
-        # If no delegations found, insert test data for development
+        # Just return empty history if no delegations found
         if not delegation_history:
-            logger.info("No delegations found, inserting test data")
-            test_delegation = Delegation(
-                wallet_address=wallet_address,
-                amount=500,  # 500 HASH
-                timestamp=datetime(2024, 12, 14),  # December 14, 2024
-                status='active'
-            )
-            db.session.add(test_delegation)
-            db.session.commit()
-            
-            delegation_history = [{
-                'amount': float(test_delegation.amount),
-                'timestamp': test_delegation.timestamp.isoformat(),
-                'tx_hash': test_delegation.tx_hash,
-                'status': test_delegation.status
-            }]
+            logger.info(f"No delegations found for wallet {wallet_address}")
         
         return jsonify({
             'delegationHistory': delegation_history
