@@ -27,10 +27,16 @@ document.addEventListener('DOMContentLoaded', function() {
                 }
                 
                 // Show the referral code
-                document.getElementById('referralCode').value = data.referral_code;
-                referralDisplay.classList.remove('d-none');
+                const referralCodeInput = document.getElementById('referralCode');
+                const referralDisplay = document.getElementById('referralCodeDisplay');
                 
-                showSuccess('Referral code generated successfully!');
+                if (referralCodeInput && referralDisplay) {
+                    referralCodeInput.value = data.referral_code;
+                    referralDisplay.classList.remove('d-none');
+                    showSuccess('Referral code generated successfully!');
+                } else {
+                    throw new Error('Could not display referral code. Please try again.');
+                }
                 
             } catch (error) {
                 console.error('Error:', error);
