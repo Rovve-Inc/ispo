@@ -214,7 +214,7 @@ def generate_referral():
         return jsonify({'error': 'Failed to generate referral code'}), 500
 
 @app.route('/api/referral/<referral_code>/use', methods=['POST'])
-def use_referral():
+def use_referral(referral_code):
     try:
         wallet_address = request.json.get('wallet_address')
         if not wallet_address:
