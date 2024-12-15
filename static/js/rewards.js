@@ -1,9 +1,37 @@
 let wallet = null;
 let rewardsChart = null;
 
+async function generateQRCode() {
+    // Generate a random connection ID or use wallet-specific data
+    const connectionData = {
+        action: "connect",
+        timestamp: Date.now(),
+        dapp: "Rovve ISPO"
+    };
+    
+    // In a real implementation, this would be your actual connection data
+    const qrData = JSON.stringify(connectionData);
+    
+    // For now, we'll use a placeholder QR code image
+    const qrCodeDiv = document.getElementById('qrCode');
+    qrCodeDiv.innerHTML = `
+        <img src="https://api.qrserver.com/v1/create-qr-code/?data=${encodeURIComponent(qrData)}&size=200x200" 
+             alt="Wallet Connection QR Code" 
+             class="img-fluid">
+    `;
+}
+
+function copyQRCode() {
+    // In a real implementation, this would copy the actual connection data
+    navigator.clipboard.writeText(window.location.href)
+        .then(() => alert('Connection link copied to clipboard'))
+        .catch(err => console.error('Failed to copy:', err));
+}
+
 async function connectWallet() {
     try {
         const modal = new bootstrap.Modal(document.getElementById('walletModal'));
+        generateQRCode();
         modal.show();
     } catch (error) {
         console.error('Error showing wallet modal:', error);
