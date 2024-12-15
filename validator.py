@@ -160,15 +160,21 @@ class ValidatorKeyManager:
     def _generate_validator_address(self, public_key):
         """Generate a Provenance validator address from public key"""
         try:
-            # Get the compressed public key bytes
-            point_bytes = public_key.public_numbers().encode_point()
+            from cryptography.hazmat.primitives import hashes
             
-            # Hash the public key using SHA256
-            sha256_hash = hashes.Hash(hashes.SHA256())
-            sha256_hash.update(point_bytes)
-            hashed = sha256_hash.finalize()
+            # Get the raw public key bytes
+            public_bytes = public_key.public_bytes(
+                encoding=serialization.Encoding.DER,
+                format=serialization.PublicFormat.SubjectPublicKeyInfo
+            )
             
-            # Take the first 20 bytes and encode in base32
+            # Hash the public key
+            digest = hashes.Hash(hashes.SHA256())
+            digest.update(public_bytes)
+            hashed = digest.finalize()
+            
+            # Take first 20 bytes and encode in base32
+            import base64
             address_bytes = hashed[:20]
             address = base64.b32encode(address_bytes).decode('utf-8').lower()
             
