@@ -5,25 +5,20 @@ document.addEventListener('DOMContentLoaded', function() {
     const referralDisplay = document.getElementById('referralCodeDisplay');
     
     function validateWalletAddress(address, formElement) {
-        console.log('Validating wallet address:', address);
+        console.log('Validating address:', address);
         
-        // Remove any existing error displays
+        // Reset any existing error state
         const errorDiv = formElement.querySelector('.invalid-feedback');
+        const input = formElement.querySelector('input[type="text"]');
         errorDiv.style.display = 'none';
-        formElement.querySelector('input[type="text"]').classList.remove('is-invalid');
+        input.classList.remove('is-invalid');
         
-        if (!address) {
-            showError('Wallet address is required', formElement);
-            return false;
-        }
+        // Basic validation - just check for pb1 prefix and alphanumeric characters
+        const isValid = address.startsWith('pb1') && /^[a-zA-Z0-9]+$/.test(address.slice(3));
+        console.log('Address validation result:', isValid);
         
-        if (!address.startsWith('pb1')) {
-            showError('Wallet address must start with pb1', formElement);
-            return false;
-        }
-        
-        if (address.length < 32 || address.length > 65) {
-            showError('Invalid wallet address length', formElement);
+        if (!isValid) {
+            showError('Please enter a valid Provenance wallet address starting with pb1', formElement);
             return false;
         }
         
@@ -34,7 +29,6 @@ document.addEventListener('DOMContentLoaded', function() {
     if (generateForm) {
         generateForm.addEventListener('submit', async function(event) {
             event.preventDefault();
-            
             const walletAddress = document.getElementById('walletAddress').value.trim();
             
             if (!validateWalletAddress(walletAddress, generateForm)) {
