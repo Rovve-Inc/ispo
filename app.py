@@ -1,9 +1,11 @@
 import os
 import logging
 from datetime import datetime
-from flask import Flask, jsonify, render_template
+from flask import Flask, request, jsonify, render_template
+import random
+import string
 from db import db
-from models import Delegation, ValidatorStatus, TokenDistribution
+from models import Delegation, ValidatorStatus, TokenDistribution, Referral
 import provenance
 from token_distribution import TokenDistributionManager
 
