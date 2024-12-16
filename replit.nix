@@ -1,5 +1,6 @@
 {pkgs}: {
   deps = [
+    pkgs.imagemagick
     pkgs.rustc
     pkgs.pkg-config
     pkgs.libxcrypt

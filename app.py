@@ -16,8 +16,8 @@ logger = logging.getLogger(__name__)
 # Initialize token distribution manager
 token_manager = TokenDistributionManager()
 
-# Create the app
-app = Flask(__name__)
+# Create the app with explicit static folder configuration
+app = Flask(__name__, static_folder='static', static_url_path='/static')
 
 # Configure database
 app.config["SQLALCHEMY_DATABASE_URI"] = os.environ.get("DATABASE_URL")
